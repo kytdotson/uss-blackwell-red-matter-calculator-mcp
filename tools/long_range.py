@@ -36,7 +36,7 @@ def long_range_describe() -> dict:
             "named after Ferdinand Magellan, the Portuguese explorer who led the first "
             "expedition to circumnavigate the Earth. In the context of the USS Blackwell's "
             "weaponized red matter core, one Magellan represents the field intensity "
-            "required to fold one cubic meter of subspace by one Planck length. The unit "
+            "required to flex one cubic meter of spacetime across subspace by one Planck length. The unit "
             "scales linearly with the core's power output and is measured at the core's "
             "outer containment field boundary."
         ),
