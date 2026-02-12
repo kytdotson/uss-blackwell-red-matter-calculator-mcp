@@ -39,7 +39,7 @@ server = MCPServer(
     name="uss-blackwell-red-matter-core-calculator-mcp",
     version="1.0.0",
     instructions=NARRATIVE_DESCRIPTION,
-    port="3000"
+    port="3000",
 )
 
 # Register all tools using the @server.tool() decorator
