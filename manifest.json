@@ -1,0 +1,42 @@
+{
+  "name": "uss-blackwell-red-matter-core-calculator-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for USS Blackwell red matter core dimensional fold calculations in the Star Trek fanfiction universe",
+  "author": "Kyt Dotson",
+  "license": "MIT",
+  "main": "server.py",
+  "type": "mcp-server",
+  "capabilities": {
+    "tools": [
+      {
+        "name": "blackwell_describe",
+        "description": "Returns metadata about the USS Blackwell Red Matter Core MCP Server including vessel designation, narrative description, and available tools"
+      },
+      {
+        "name": "long_range_describe",
+        "description": "Provides comprehensive reference documentation about the Magellan unit, dimensional fold equation, efficiency zones, safety boundaries, and example calculations"
+      },
+      {
+        "name": "long_range_jump_distance",
+        "description": "Calculates jump distance in light-years for a given red matter field strength in Magellans (forward calculation)"
+      },
+      {
+        "name": "long_range_field_strength",
+        "description": "Calculates required red matter field strength in Magellans for a target jump distance in light-years (inverse calculation)"
+      }
+    ]
+  },
+  "transport": {
+    "stdio": true,
+    "http": {
+      "enabled": true,
+      "host": "0.0.0.0",
+      "port": 3000,
+      "streaming": true
+    }
+  },
+  "runtime": {
+    "language": "python",
+    "requirements": "requirements.txt"
+  }
+}
