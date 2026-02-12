@@ -10,7 +10,7 @@ This server provides tools for:
 - Required field strength calculations
 
 The server uses the mcp-use library and supports stdio transport for MCP clients
-such as Claude Desktop.
+such as Claude Desktop (additionally modified for http-streaming transport).
 """
 
 from mcp_use.server import MCPServer
@@ -51,7 +51,7 @@ server.tool()(long_range_field_strength)
 
 if __name__ == "__main__":
     # Run with stdio transport (for MCP clients)
-    #server.run(transport="stdio")
+    server.run(transport="stdio")
 
     # Run with HTTP transport (for web clients)
     server.run(
