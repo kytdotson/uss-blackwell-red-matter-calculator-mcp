@@ -185,3 +185,4 @@ tasks.md
 .kiro*
 .kiro/
 .hypothesis*
+*_test.py
