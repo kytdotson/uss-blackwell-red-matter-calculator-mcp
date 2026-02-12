@@ -1,0 +1,29 @@
+# Test files
+tests/
+*.pyc
+__pycache__/
+.pytest_cache/
+.coverage
+htmlcov/
+.hypothesis/
+
+# Development files
+.git/
+.gitignore
+.kiro/
+build.js
+*.md.backup
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Spec files (not needed in distribution)
+uss_blackwell_mcp_server_spec.md

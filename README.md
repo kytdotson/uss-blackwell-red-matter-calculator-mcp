@@ -19,29 +19,50 @@ The USS Blackwell (NX-8091-B) is equipped with a weaponized red matter core that
 ### Requirements
 
 - Python 3.10 or higher
+- Node.js 16.0 or higher (for npm installation)
 - pip package manager
 
-### Setup
+### Option 1: Install via npm (Recommended)
+
+```bash
+npm install uss-blackwell-mcp-server
+```
+
+Or run directly with npx:
+```bash
+npx uss-blackwell-mcp-server
+```
+
+### Option 2: Install from source
 
 1. Clone the repository or download the source code
 
-2. Install dependencies:
+2. Install Python dependencies:
 ```bash
 pip install -r requirements.txt
+```
+
+3. Build the npm package (optional):
+```bash
+npm install
+npm run build
 ```
 
 ## Usage
 
 ### Running the Server
 
-Start the MCP server with stdio transport:
+**If installed via npm:**
+```bash
+npx uss-blackwell-mcp-server
+```
 
+**If running from source:**
 ```bash
 python server.py
 ```
 
-For debug mode with inspector and documentation endpoints:
-
+**For debug mode with inspector and documentation endpoints:**
 ```bash
 python server.py --debug
 ```
@@ -57,15 +78,27 @@ The server exposes 4 MCP tools:
 
 ### Example Usage with Claude Desktop
 
-Add to your Claude Desktop MCP configuration:
+Add to your Claude Desktop MCP configuration (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS or `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
 
+**If installed via npm:**
+```json
+{
+  "mcpServers": {
+    "uss-blackwell": {
+      "command": "npx",
+      "args": ["uss-blackwell-mcp-server"]
+    }
+  }
+}
+```
+
+**If running from source:**
 ```json
 {
   "mcpServers": {
     "uss-blackwell": {
       "command": "python",
-      "args": ["/path/to/server.py"],
-      "transport": "stdio"
+      "args": ["/absolute/path/to/server.py"]
     }
   }
 }

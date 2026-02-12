@@ -1,0 +1,44 @@
+{
+  "name": "uss-blackwell-mcp-server",
+  "version": "1.0.0",
+  "description": "USS Blackwell Red Matter Core MCP Server - Dimensional fold calculation tools for the USS Blackwell fanfiction universe",
+  "type": "module",
+  "bin": {
+    "uss-blackwell-mcp-server": "./build/index.js"
+  },
+  "scripts": {
+    "build": "node build.js",
+    "start": "node build/index.js",
+    "prepare": "npm run build",
+    "test": "python -m pytest tests/ -v",
+    "test:coverage": "python -m pytest --cov=calculator --cov=tools --cov=server --cov-report=html",
+    "test:properties": "python -m pytest tests/test_properties.py -v --hypothesis-show-statistics"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "star-trek",
+    "uss-blackwell",
+    "red-matter",
+    "dimensional-fold",
+    "calculator"
+  ],
+  "author": "Kyt Dotson",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/uss-blackwell-mcp-server.git"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "files": [
+    "build/",
+    "calculator/",
+    "tools/",
+    "server.py",
+    "requirements.txt",
+    "README.md"
+  ]
+}
