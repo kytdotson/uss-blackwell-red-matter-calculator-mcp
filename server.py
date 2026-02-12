@@ -39,7 +39,6 @@ server = MCPServer(
     name="uss-blackwell-red-matter-core-calculator-mcp",
     version="1.0.0",
     instructions=NARRATIVE_DESCRIPTION,
-    port="3000",
 )
 
 # Register all tools using the @server.tool() decorator
@@ -49,8 +48,8 @@ server.tool()(long_range_jump_distance)
 server.tool()(long_range_field_strength)
 
 if __name__ == "__main__":
-    server.run(
-    transport="streamable-http",
-    reload=False,
-    debug=False
-    )
+    # Run with stdio transport (for MCP clients)
+    server.run(transport="stdio")
+
+    # Run with HTTP transport (for web clients)
+    server.run(transport="streamable-http")
