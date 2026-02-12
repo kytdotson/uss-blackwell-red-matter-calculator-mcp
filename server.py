@@ -50,3 +50,5 @@ server.tool()(long_range_field_strength)
 if __name__ == "__main__":
     # Run the server with stdio transport
     server.run(transport="stdio")
+
+    # perhaps I need to use http-transport
