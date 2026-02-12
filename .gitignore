@@ -177,7 +177,6 @@ pyrightconfig.json
 
 uss_blackwell_mcp_server_spec.md
 test_*
-requirements.txt
 tests/
 .pytest*
 tasks.md
