@@ -40,9 +40,16 @@ def long_range_describe() -> dict:
             "scales linearly with the core's power output and is measured at the core's "
             "outer containment field boundary."
         ),
+        "unit_metric_prefixes": {
+            "Magellans": "M (base unit, < 1,000)",
+            "kiloMagellans": "kM (1,000 to 999,999)",
+            "MegaMagellans": "MM (≥ 1,000,000)"
+        },
         "unit_base_measurement": "M per cubic meter [of subspace flexure density (F:j,i,k)]",
         "unit_jump_measurement": "Measured at the core for jump purposes",
         "equation": "D = K × ln(M − M₀) × √(M / Mₓ) × ξ(M)",
+        "equation_formal_name": "Dreiling-Nemêth Subspace Flexure Collapse Equation",
+        "equation_informal_name": "Blackwell Drive Equation",
         "equation_variables": {
             "D": "Jump distance in light-years",
             "K": "Dimensional constant (12.7)",
