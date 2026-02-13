@@ -23,7 +23,7 @@ def blackwell_describe() -> dict:
             - success (bool): Always True
     """
     return {
-        "server_name": "uss-blackwell-red-matter-core-calculator-mcp",
+        "server_name": "uss-blackwell-mcp",
         "vessel": "USS Blackwell NX-8091-B",
         "description": (
             "The USS Blackwell NX-8091-B, an experimental rapid-response medical cruiser — "
@@ -36,6 +36,12 @@ def blackwell_describe() -> dict:
             "and short range jumps, translating objects within the red matter field, and "
             "performing other strange miracles to execute the Blackwell's mission to save lives."
         ),
+        "author": "Kyt Dotson",
+        "links": {
+            "fanfiction_series": "https://archiveofourown.org/series/1512200",
+            "twitter": "http://x.com/kytsune",
+            "bluesky": "https://bsky.app/profile/kytsune.bsky.social"
+        },
         "available_tool_categories": ["long_range"],
         "available_tools": [],  # Will be populated dynamically later
         "success": True
