@@ -6,6 +6,12 @@ A Python-based Model Context Protocol server that exposes Red Matter dimensional
 
 The USS Blackwell (NX-8091-B) is equipped with a weaponized red matter core that folds subspace for dimensional jumps. This MCP server provides tools for calculating long-range jump distances and required field strengths using the Blackwell Drive equation, with proper safety boundaries and efficiency zone handling.
 
+## Resources
+
+Original JavaScript and HTML calculation pages are [available online](https://crystalia.net/kitsune/blackwell/red_matter_calculator.html).
+
+Fanfiction universe available on Archive of Our Own (AO3) at [Star Trek: Blackwell by Kyt Dotson](https://archiveofourown.org/series/1512200).
+
 ## Features
 
 - **Forward Calculation**: Calculate jump distance from field strength
@@ -19,21 +25,9 @@ The USS Blackwell (NX-8091-B) is equipped with a weaponized red matter core that
 ### Requirements
 
 - Python 3.10 or higher
-- Node.js 16.0 or higher (for npm installation)
 - pip package manager
 
-### Option 1: Install via npm (Recommended)
-
-```bash
-npm install uss-blackwell-mcp-server
-```
-
-Or run directly with npx:
-```bash
-npx uss-blackwell-mcp-server
-```
-
-### Option 2: Install from source
+### Current Option: Install from source
 
 1. Clone the repository or download the source code
 
@@ -42,22 +36,11 @@ npx uss-blackwell-mcp-server
 pip install -r requirements.txt
 ```
 
-3. Build the npm package (optional):
-```bash
-npm install
-npm run build
-```
-
 ## Usage
 
 ### Running the Server
 
-**If installed via npm:**
-```bash
-npx uss-blackwell-mcp-server
-```
-
-**If running from source:**
+**For running from source:**
 ```bash
 python server.py
 ```
@@ -80,25 +63,12 @@ The server exposes 4 MCP tools:
 
 Add to your Claude Desktop MCP configuration (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS or `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
 
-**If installed via npm:**
-```json
-{
-  "mcpServers": {
-    "uss-blackwell": {
-      "command": "npx",
-      "args": ["uss-blackwell-mcp-server"]
-    }
-  }
-}
-```
-
 **If running from source:**
 ```json
 {
   "mcpServers": {
     "uss-blackwell": {
-      "command": "python",
-      "args": ["/absolute/path/to/server.py"]
+      "command": "C:\\Users\\Kyt\\uss-blackwell-red-matter-calculator-mcp\\start_server.bat"
     }
   }
 }
