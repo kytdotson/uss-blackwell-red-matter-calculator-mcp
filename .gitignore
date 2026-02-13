@@ -186,3 +186,4 @@ tasks.md
 .kiro/
 .hypothesis*
 *_test.py
+*_test*
