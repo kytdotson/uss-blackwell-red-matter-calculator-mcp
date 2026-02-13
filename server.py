@@ -36,7 +36,7 @@ NARRATIVE_DESCRIPTION = (
 
 # Create MCP server instance
 server = MCPServer(
-    name="uss-blackwell-red-matter-core-calculator-mcp", #maybe name this uss-blackwell-mcp? way shorter!
+    name="uss-blackwell-mcp", #maybe name this uss-blackwell-mcp? way shorter!
     version="1.0.0",
     instructions=NARRATIVE_DESCRIPTION,
     host="0.0.0.0",
