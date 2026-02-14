@@ -1,0 +1,455 @@
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "result": {
+    "tools": [
+      {
+        "name": "blackwell_describe",
+        "description": "\nDescribe the USS Blackwell Red Matter Core MCP Server.\n\nReturns metadata about the server including its name, vessel designation,\nnarrative description, available tool categories, and registered tools.\n\nReturns:\n    dict: Server metadata with the following fields:\n        - server_name (str): The MCP server name\n        - vessel (str): The vessel designation\n        - description (str): Full narrative description\n        - available_tool_categories (list[str]): List of tool categories\n        - available_tools (list[str]): List of all registered tool names\n        - success (bool): Always True\n",
+        "inputSchema": {
+          "properties": {},
+          "title": "blackwell_describeArguments",
+          "type": "object"
+        }
+      },
+      {
+        "name": "long_range_describe",
+        "description": "\nDescribe the long-range jump system and the Magellan unit.\n\nReturns comprehensive reference documentation about the red matter field\nmeasurement unit, the dimensional fold equation, efficiency zones, safety\nboundaries, and example calculation results.\n\nReturns:\n    dict: System reference documentation with the following fields:\n        - unit_name (str): Name of the field strength unit\n        - unit_symbol (str): Symbol for the unit\n        - unit_definition (str): Full definition of the Magellan unit\n        - unit_base_measurement (str): Base measurement description\n        - unit_jump_measurement (str): Jump measurement description\n        - equation (str): The dimensional fold equation\n        - equation_variables (dict): Descriptions of equation variables\n        - efficiency_zones (list): List of efficiency zone specifications\n        - safety_boundaries (list): List of safety boundary specifications\n        - example_results (list): Known calculation results for verification\n        - success (bool): Always True\n",
+        "inputSchema": {
+          "properties": {},
+          "title": "long_range_describeArguments",
+          "type": "object"
+        }
+      },
+      {
+        "name": "long_range_jump_distance",
+        "description": "\nCalculate jump distance for a given field strength.\n\nPerforms forward calculation using the Blackwell Drive equation to determine\nhow far the USS Blackwell can travel with the specified field strength.\n\nArgs:\n    field_strength_magellans: Red matter field strength in Magellans\n    \nReturns:\n    dict: Calculation results or error response\n    \n    Success response contains:\n        - distance_light_years (float): Calculated jump distance\n        - field_strength_magellans (float): Echo of input\n        - efficiency_factor (float): Applied efficiency factor (1.0, 1.2, or 0.8)\n        - efficiency_zone (str): Zone name (\"standard\", \"optimal\", or \"diminishing\")\n        - power_utilization_pct (float): Percentage of max safe field strength\n        - safety_status (str): Safety classification\n        - warnings (list[str]): Warning messages (empty if safe)\n        - success (bool): True\n        \n    Error response contains:\n        - field_strength_magellans (float): Echo of input\n        - safety_status (str): Safety classification\n        - error (str): Human-readable error message\n        - warnings (list[str]): Warning messages\n        - success (bool): False\n        \nRequirements:\n    - 5.1: Calculate jump distance using the Blackwell Drive equation\n    - 5.2: Return error if field strength is at or below 200 Magellans\n    - 5.3: Return error if field strength is above 3,000,000 Magellans\n    - 5.7: Return all required fields in success response\n    - 5.8: Echo input field strength in response\n    - 5.9: Include warnings for unsafe field strengths\n    - 10.1: Return success=False for invalid inputs\n    - 10.2: Include human-readable error message\n    - 10.3: Include safety status in error response\n    - 10.4: Return success=True with warnings for successful calculations\n    - 10.5: Return success=True with empty warnings for safe calculations\n",
+        "inputSchema": {
+          "properties": {
+            "field_strength_magellans": {
+              "description": "Red matter field strength in Magellans. The Magellan (M) measures the field intensity required to flex one cubic meter of spacetime by one Planck length. Range: 200.01 to 3,000,000. Safe operating range: 500 to 2,000,000. Values \u00e2\u2030\u00a4200 cause equation failure (safety threshold M\u00e2\u201a\u20ac). Values 200-500 are extremely dangerous (high fold collapse risk). Values >2,000,000 exceed safe limits (core destabilization risk). Values >3,000,000 cause catastrophic overload.",
+              "exclusiveMinimum": 200.0,
+              "maximum": 3000000.0,
+              "title": "Field Strength Magellans",
+              "type": "number"
+            }
+          },
+          "required": [
+            "field_strength_magellans"
+          ],
+          "title": "long_range_jump_distanceArguments",
+          "type": "object"
+        }
+      },
+      {
+        "name": "long_range_field_strength",
+        "description": "\nCalculate required field strength for a target distance.\n\nPerforms inverse calculation using Newton-Raphson iteration to determine\nthe field strength needed to reach the specified distance.\n\nArgs:\n    target_distance_light_years: Target jump distance in light-years\n\nReturns:\n    dict: Calculation results or error response\n\n    Success response contains:\n        - field_strength_magellans (float): Calculated field strength\n        - field_strength_formatted (str): Human-readable formatted string\n        - distance_light_years (float): Echo of target distance\n        - efficiency_factor (float): Applied efficiency factor (1.0, 1.2, or 0.8)\n        - efficiency_zone (str): Zone name (\"standard\", \"optimal\", or \"diminishing\")\n        - power_utilization_pct (float): Percentage of max safe field strength\n        - safety_status (str): Safety classification\n        - warnings (list[str]): Warning messages (empty if safe)\n        - success (bool): True\n\n    Error response contains:\n        - distance_light_years (float): Echo of input\n        - error (str): Human-readable error message\n        - warnings (list[str]): Empty list\n        - success (bool): False\n\nRequirements:\n    - 6.1: Calculate field strength using Newton-Raphson iteration\n    - 6.2: Return error if target distance is zero or negative\n    - 6.6: Return all required fields in success response\n    - 6.7: Echo target distance in response\n    - 6.8: Include warnings for unsafe field strengths\n    - 10.1: Return success=False for invalid inputs\n    - 10.2: Include human-readable error message\n    - 10.3: Include safety status in error response\n    - 10.4: Return success=True with warnings for successful calculations\n    - 10.5: Return success=True with empty warnings for safe calculations\n",
+        "inputSchema": {
+          "properties": {
+            "target_distance_light_years": {
+              "description": "Target jump distance in light-years. Must be positive. The system uses Newton-Raphson iteration to calculate the required field strength. Typical range: 1 to 50,000 light-years. Distances >50,000 may require field strengths exceeding safe limits.",
+              "exclusiveMinimum": 0.0,
+              "title": "Target Distance Light Years",
+              "type": "number"
+            }
+          },
+          "required": [
+            "target_distance_light_years"
+          ],
+          "title": "long_range_field_strengthArguments",
+          "type": "object"
+        }
+      },
+      {
+        "name": "short_range_describe",
+        "description": "\nDescribe the short-range tactical jump system.\n\nReturns comprehensive reference documentation about the tactical jump system,\nincluding physics explanation (Rizan's Resonance Bridge Theory), adjustable\nparameters, all equations with variable descriptions, operational parameters,\nsafe zones, criticality thresholds, and example calculations.\n\nReturns:\n    dict: System reference documentation with the following fields:\n        - system_name (str): Name of the tactical jump system\n        - distance_range (dict): Minimum and maximum operational distances\n        - physics_explanation (str): Rizan's Resonance Bridge Theory\n        - adjustable_parameters (dict): Phase offset and subspace resonance details\n        - equations (dict): All tactical jump equations with variable descriptions\n        - operational_parameters (dict): Cochrane field, charge time, and other limits\n        - criticality_thresholds (dict): Warning levels and their meanings\n        - safe_zones (dict): Guidance on optimal parameter ranges\n        - example_calculations (list): Verification examples with known results\n        - success (bool): Always True\n",
+        "inputSchema": {
+          "properties": {},
+          "title": "short_range_describeArguments",
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "result": {
+              "additionalProperties": true,
+              "title": "Result",
+              "type": "object"
+            }
+          },
+          "required": [
+            "result"
+          ],
+          "title": "short_range_describeOutput",
+          "type": "object"
+        }
+      },
+      {
+        "name": "short_range_jump_distance",
+        "description": "\nCalculate achievable distance for a tactical jump given charge time and parameters.\n\nThis is the forward calculation: given charge time and system parameters, determine\nhow far the ship can jump. Optionally accepts a pre-calculated Magellan field strength,\notherwise uses a default tactical field value.\n\nArgs:\n    charge_time_minutes: Charge duration in minutes (required)\n    cochrane_field: Cochrane guide field in millicochranes (default: 350.0)\n    phase_offset: Phase offset 0.00-1.00 (default: 0.75)\n    subspace_resonance: Subspace resonance frequency in THz (default: 47.23)\n    magellan_field: Instantaneous Magellan field if known (optional, default: None)\n    energization_time: Minutes since core energization (default: 0.0)\n    jump_count: Number of previous jumps in sequence (default: 0)\n\nReturns:\n    Dict[str, Any]: Response dictionary with the following structure:\n    \n    Success response (success=True):\n        - distance_meters (float): Jump distance in meters\n        - distance_formatted (str): Human-readable distance with units\n        - field_strength_magellans (float): Magellan field strength used\n        - charge_time_minutes (float): Charge duration\n        - charge_density (float): Integrated charge density factor\n        - modulation_factors (dict):\n            - cochrane_efficiency (float): \u00ce\u00b7(C) value\n            - resonance_modulation (float): \u00ce\u00a8(R) value\n            - phase_resonance_coupling (float): \u00ce\u00a9(\u00cf\u2020,R) value\n        - criticality (dict):\n            - total (float): Total criticality value\n            - red_matter (float): Red matter component\n            - warp_core (float): Warp core component\n            - level (str): Criticality level name\n            - status_message (str): Status description\n            - time_to_next_threshold_minutes (float|None): Time estimate\n        - coordinate_accuracy (dict):\n            - flexure_matrix (List[List[float]]): 3x3 transformation matrix\n            - accuracy_degradation_pct (float): Accuracy degradation percentage\n        - landing_offset (dict):\n            - offset_meters (float): Scalar magnitude of positional error\n            - offset_formatted (str): Human-readable distance with units\n            - directional_components (dict):\n                - fore_aft_meters (float): Forward/aft component (+ = forward, - = aft)\n                - port_starboard_meters (float): Port/starboard component (+ = starboard, - = port)\n                - dorsal_ventral_meters (float): Dorsal/ventral component (+ = dorsal, - = ventral)\n            - directional_summary (str): Plain-language direction description\n            - severity (str): Categorical severity (NEGLIGIBLE|MINOR|SIGNIFICANT|DANGEROUS|CATASTROPHIC)\n            - narrative_summary (str): Complete narrative sentence ready for dialogue\n        - warnings (List[str]): Operational warnings\n        - danger_zones (List[str]): Active danger zone warnings\n        - success (bool): True\n    \n    Error response (success=False):\n        - error (str): Error message\n        - validation_errors (List[str]): Validation error details (if applicable)\n        - success (bool): False\n\nExample:\n    >>> result = short_range_jump_distance(\n    ...     charge_time_minutes=2.0,\n    ...     cochrane_field=350.0,\n    ...     phase_offset=0.75,\n    ...     subspace_resonance=47.23\n    ... )\n    >>> print(f\"Distance: {result['distance_formatted']}\")\n    Distance: 120.5 kilometers\n",
+        "inputSchema": {
+          "properties": {
+            "charge_time_minutes": {
+              "description": "Charge accumulation time in minutes. Controls how long the red matter core accumulates energy before jump execution. Range: 0.3 to 15.0. Safe operating range: 0.3 to 10.0. Longer charge times enable greater distances but increase criticality risk exponentially. Values >10.0 generate criticality warnings due to quantum scarring accumulation.",
+              "maximum": 15.0,
+              "minimum": 0.3,
+              "title": "Charge Time Minutes",
+              "type": "number"
+            },
+            "cochrane_field": {
+              "default": 350.0,
+              "description": "Warp core coupling strength in millicochranes. Controls the warp core's power contribution to the tactical jump system. Range: 100 to 900. Defaults to 350. Note: 1000 millicochranes = Warp Factor 1.0. Safe zones vary with phase_offset and subspace_resonance due to harmonic interactions. Use short_range_optimize_cochrane() to identify safe zones for current conditions. Avoid values where sin(\u00cf\u20acC/C_max) approaches zero (null zones).",
+              "maximum": 900.0,
+              "minimum": 100.0,
+              "title": "Cochrane Field",
+              "type": "number"
+            },
+            "phase_offset": {
+              "default": 0.75,
+              "description": "Phase offset controlling temporal alignment between red matter core oscillations and warp field harmonics. Range: 0.00 to 1.00. Defaults to 0.75 (optimal). The optimal value of 0.75 provides maximum stability and coupling efficiency. Deviation increases criticality risk and reduces phase-resonance coupling. Affects Cochrane coupling efficiency, shifts resonance danger zones by \u00c2\u00b15 THz per 0.1 deviation, and impacts coordinate accuracy through flexure matrix.",
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "title": "Phase Offset",
+              "type": "number"
+            },
+            "subspace_resonance": {
+              "default": 47.23,
+              "description": "Subspace resonance frequency in THz (terahertz). Represents the local quantum oscillation rate of the subspace fabric. Range: 3.0 to 113.0 THz. Defaults to 47.23 (second harmonic peak). This value varies by stellar region and must be measured before tactical operations. Optimal zones (harmonic peaks): 25, 47, 72, 95 THz. Null zones (near-zero modulation): 0, 56.5, 113 THz. Danger zones (base): 14, 28, 42, 56, 70, 84, 98 THz (shift by (\u00cf\u2020-0.75)\u00c3\u20145 based on phase_offset).",
+              "maximum": 113.0,
+              "minimum": 3.0,
+              "title": "Subspace Resonance",
+              "type": "number"
+            },
+            "magellan_field": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Instantaneous red matter field strength in Magellans at jump execution. Optional. If not provided, defaults to 500.0 (typical tactical field strength). Range: 100 to 2000 typical for tactical jumps. Unlike long-range jumps, tactical jumps use charge density multiplication, so lower field strengths are sufficient.",
+              "title": "Magellan Field"
+            },
+            "energization_time": {
+              "default": 0.0,
+              "description": "Minutes since red matter core energization. Used for criticality tracking. Range: 0.0 to 60.0. Defaults to 0.0 (first jump in sequence). Criticality accumulates exponentially with energization time. Core de-energization required for quantum scarring recovery.",
+              "maximum": 60.0,
+              "minimum": 0.0,
+              "title": "Energization Time",
+              "type": "number"
+            },
+            "jump_count": {
+              "default": 0,
+              "description": "Number of previous jumps performed during current energization period. Used for cumulative quantum scarring calculation. Range: 0 to 20. Defaults to 0 (first jump). Each jump creates microscopic tears in subspace fabric that accumulate exponentially. Safe sequence: 3-5 jumps. Maximum recommended: 7 jumps before de-energization.",
+              "maximum": 20,
+              "minimum": 0,
+              "title": "Jump Count",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "charge_time_minutes"
+          ],
+          "title": "short_range_jump_distanceArguments",
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "result": {
+              "additionalProperties": true,
+              "title": "Result",
+              "type": "object"
+            }
+          },
+          "required": [
+            "result"
+          ],
+          "title": "short_range_jump_distanceOutput",
+          "type": "object"
+        }
+      },
+      {
+        "name": "short_range_field_strength",
+        "description": "\nCalculate required field strength for a target distance (inverse calculation).\n\nThis is the inverse calculation: given a desired distance and charge time, determine\nthe Magellan field strength required to achieve that distance. Also assesses feasibility\nbased on field limits and criticality constraints.\n\nArgs:\n    target_distance_meters: Desired jump distance in meters (required)\n    cochrane_field: Cochrane guide field in millicochranes (default: 350.0)\n    phase_offset: Phase offset 0.00-1.00 (default: 0.75)\n    subspace_resonance: Subspace resonance frequency in THz (default: 47.23)\n\nReturns:\n    Dict[str, Any]: Response dictionary with the following structure:\n    \n    Success response (success=True):\n        - field_strength_magellans (float): Required Magellan field strength\n        - field_strength_formatted (str): Human-readable field strength with units\n        - target_distance_meters (float): Target distance requested\n        - target_distance_formatted (str): Human-readable distance with units\n        - charge_time_minutes (float): Charge duration\n        - charge_density (float): Integrated charge density factor\n        - feasibility (dict):\n            - achievable (bool): Whether jump is feasible\n            - field_within_limits (bool): Field strength within operational limits\n            - criticality_acceptable (bool): Criticality below critical threshold\n            - reason (str): Explanation of feasibility status\n        - criticality (dict):\n            - total (float): Total criticality value\n            - red_matter (float): Red matter component\n            - warp_core (float): Warp core component\n            - level (str): Criticality level name\n            - status_message (str): Status description\n            - time_to_next_threshold_minutes (float|None): Time estimate\n        - warnings (List[str]): Operational warnings\n        - recommendations (List[str]): Tactical recommendations\n        - success (bool): True\n    \n    Error response (success=False):\n        - error (str): Error message\n        - validation_errors (List[str]): Validation error details (if applicable)\n        - target_distance_meters (float): Target distance (if applicable)\n        - charge_density (float): Charge density (if calculated)\n        - feasibility (dict): Feasibility assessment (if applicable)\n        - success (bool): False\n\nExample:\n    >>> result = short_range_field_strength(\n    ...     target_distance_meters=100000,\n    ...     charge_time_minutes=2.0,\n    ...     cochrane_field=350.0,\n    ...     phase_offset=0.75,\n    ...     subspace_resonance=47.23\n    ... )\n    >>> print(f\"Required field: {result['field_strength_formatted']}\")\n    Required field: 612.3 Magellans\n",
+        "inputSchema": {
+          "properties": {
+            "target_distance_meters": {
+              "description": "Target tactical jump distance in meters. Range: 1 to 4,500,000,000 (30 AU). Tactical jumps operate from 1 meter to 30 AU using quantum-scale subspace resonances. The system uses Newton-Raphson iteration to calculate required field strength and charge time.",
+              "maximum": 4500000000.0,
+              "minimum": 1.0,
+              "title": "Target Distance Meters",
+              "type": "number"
+            },
+            "cochrane_field": {
+              "default": 350.0,
+              "description": "Warp core coupling strength in millicochranes. Range: 100 to 900. Defaults to 350. See short_range_jump_distance for detailed description.",
+              "maximum": 900.0,
+              "minimum": 100.0,
+              "title": "Cochrane Field",
+              "type": "number"
+            },
+            "phase_offset": {
+              "default": 0.75,
+              "description": "Phase offset for temporal alignment. Range: 0.00 to 1.00. Defaults to 0.75 (optimal). See short_range_jump_distance for detailed description.",
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "title": "Phase Offset",
+              "type": "number"
+            },
+            "subspace_resonance": {
+              "default": 47.23,
+              "description": "Subspace resonance frequency in THz. Range: 3.0 to 113.0. Defaults to 47.23. See short_range_jump_distance for detailed description.",
+              "maximum": 113.0,
+              "minimum": 3.0,
+              "title": "Subspace Resonance",
+              "type": "number"
+            }
+          },
+          "required": [
+            "target_distance_meters"
+          ],
+          "title": "short_range_field_strengthArguments",
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "result": {
+              "additionalProperties": true,
+              "title": "Result",
+              "type": "object"
+            }
+          },
+          "required": [
+            "result"
+          ],
+          "title": "short_range_field_strengthOutput",
+          "type": "object"
+        }
+      },
+      {
+        "name": "short_range_criticality",
+        "description": "\nAssess criticality risk for current or planned operational state.\n\nThis tool evaluates the quantum scarring and system stress levels based on\nenergization time and jump history. It provides detailed criticality breakdown,\nthreshold analysis, and tactical recommendations for safe operations.\n\nArgs:\n    energization_time_minutes: Time since core energization in minutes (required)\n    jump_count: Number of jumps performed in current sequence (required)\n    magellan_field: Current or planned Magellan field strength (required)\n    cochrane_field: Cochrane guide field in millicochranes (default: 350.0)\n    phase_offset: Phase offset 0.00-1.00 (default: 0.75)\n    subspace_resonance: Subspace resonance frequency in THz (default: 47.23)\n    charge_time_minutes: Charge time for criticality calculation (default: 2.0)\n\nReturns:\n    Dict[str, Any]: Response dictionary with the following structure:\n    \n    Success response (success=True):\n        - criticality (dict):\n            - total (float): Total criticality value\n            - red_matter (float): Red matter component\n            - warp_core (float): Warp core component\n            - level (str): Criticality level name\n            - status_message (str): Status description\n        - thresholds (dict): Time estimates to each threshold:\n            - warning_minutes (float|None): Time to WARNING threshold\n            - ejection_minutes (float|None): Time to EJECTION threshold\n            - failure_minutes (float|None): Time to FAILURE threshold\n            - catastrophic_minutes (float|None): Time to CATASTROPHIC threshold\n        - operational_context (dict):\n            - energization_time_minutes (float): Time since energization\n            - jump_count (int): Number of jumps performed\n            - jumps_remaining_estimate (int|None): Estimated safe jumps remaining\n        - recommendations (List[str]): Tactical recommendations\n        - warnings (List[str]): Operational warnings\n        - success (bool): True\n    \n    Error response (success=False):\n        - error (str): Error message\n        - validation_errors (List[str]): Validation error details\n        - success (bool): False\n\nExample:\n    >>> result = short_range_criticality(\n    ...     energization_time_minutes=5.0,\n    ...     jump_count=2,\n    ...     magellan_field=500.0,\n    ...     cochrane_field=350.0,\n    ...     phase_offset=0.75,\n    ...     subspace_resonance=47.23\n    ... )\n    >>> print(f\"Criticality: {result['criticality']['level']}\")\n    Criticality: WARNING\n",
+        "inputSchema": {
+          "properties": {
+            "energization_time_minutes": {
+              "description": "Minutes since red matter core energization. Range: 0.0 to 60.0. Criticality grows exponentially with energization time. Used to calculate red matter criticality component and estimate time to criticality thresholds.",
+              "maximum": 60.0,
+              "minimum": 0.0,
+              "title": "Energization Time Minutes",
+              "type": "number"
+            },
+            "jump_count": {
+              "description": "Number of jumps performed during current energization period. Range: 0 to 20. Each jump contributes to cumulative quantum scarring with exponentially increasing impact.",
+              "maximum": 20,
+              "minimum": 0,
+              "title": "Jump Count",
+              "type": "integer"
+            },
+            "magellan_field": {
+              "description": "Current red matter field strength in Magellans. Range: 100 to 2000 typical for tactical operations. Used to calculate interaction factor between red matter and warp core systems.",
+              "maximum": 2000.0,
+              "minimum": 100.0,
+              "title": "Magellan Field",
+              "type": "number"
+            },
+            "cochrane_field": {
+              "default": 350.0,
+              "description": "Warp core coupling strength in millicochranes. Range: 100 to 900. Defaults to 350. Higher values increase warp core stress component of criticality.",
+              "maximum": 900.0,
+              "minimum": 100.0,
+              "title": "Cochrane Field",
+              "type": "number"
+            },
+            "phase_offset": {
+              "default": 0.75,
+              "description": "Phase offset. Range: 0.00 to 1.00. Defaults to 0.75. Affects criticality modifier through phase-resonance coupling.",
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "title": "Phase Offset",
+              "type": "number"
+            },
+            "subspace_resonance": {
+              "default": 47.23,
+              "description": "Subspace resonance frequency in THz. Range: 3.0 to 113.0. Defaults to 47.23. Affects criticality modifier through resonance modulation.",
+              "maximum": 113.0,
+              "minimum": 3.0,
+              "title": "Subspace Resonance",
+              "type": "number"
+            },
+            "charge_time_minutes": {
+              "default": 2.0,
+              "description": "Charge time for criticality calculation in minutes. Range: 0.3 to 15.0. Defaults to 2.0. Used to calculate warp core stress component.",
+              "maximum": 15.0,
+              "minimum": 0.3,
+              "title": "Charge Time Minutes",
+              "type": "number"
+            }
+          },
+          "required": [
+            "energization_time_minutes",
+            "jump_count",
+            "magellan_field"
+          ],
+          "title": "short_range_criticalityArguments",
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "result": {
+              "additionalProperties": true,
+              "title": "Result",
+              "type": "object"
+            }
+          },
+          "required": [
+            "result"
+          ],
+          "title": "short_range_criticalityOutput",
+          "type": "object"
+        }
+      },
+      {
+        "name": "short_range_sequential_jumps",
+        "description": "\nPlan and analyze a sequence of multiple tactical jumps.\n\nCalculates cumulative effects of sequential jumps including:\n- Energization time accumulation\n- Criticality buildup from quantum scarring\n- Field strength requirements for each jump\n- Safety assessment for entire sequence\n\nWorkflow Note:\n    If you know field parameters (charge time, Magellans) but not target distance,\n    call short_range_jump_distance first for each leg to obtain distance_meters,\n    then pass those values into the jump sequence.\n\nArgs:\n    jump_sequence: List of JumpEntry objects with distance_meters, charge_time_minutes, and optional target_description\n    cochrane_field: Cochrane guide field in millicochranes (default: 350.0)\n    phase_offset: Phase offset 0.00-1.00 (default: 0.75)\n    subspace_resonance: Subspace resonance in THz (default: 47.23)\n    magellan_field: Red matter field strength in Magellans (default: 500.0)\n\nReturns:\n    Dict[str, Any]: Response dictionary with the following structure:\n    \n    Success response (success=True):\n        - sequence_analysis (dict):\n            - total_jumps (int): Number of jumps in sequence\n            - total_energization_time_minutes (float): Total energization time\n            - sequence_safe (bool): Whether entire sequence is safe\n            - critical_jump_number (int|None): First unsafe jump (if any)\n        - jump_results (List[dict]): Results for each jump:\n            - jump_number (int): Jump index (1-based)\n            - distance_meters (float): Target distance\n            - field_strength_magellans (float|None): Required field\n            - criticality_after_jump (float|None): Criticality after this jump\n            - criticality_level (str): Level name\n            - landing_offset (dict): Landing offset information for this jump:\n                - offset_meters (float): Scalar magnitude of positional error\n                - offset_formatted (str): Human-readable distance with units\n                - directional_components (dict):\n                    - fore_aft_meters (float): Forward/aft component (+ = forward, - = aft)\n                    - port_starboard_meters (float): Port/starboard component (+ = starboard, - = port)\n                    - dorsal_ventral_meters (float): Dorsal/ventral component (+ = dorsal, - = ventral)\n                - directional_summary (str): Plain-language direction description\n                - severity (str): Categorical severity (NEGLIGIBLE|MINOR|SIGNIFICANT|DANGEROUS|CATASTROPHIC)\n                - narrative_summary (str): Complete narrative sentence ready for dialogue\n            - safe_to_proceed (bool): Whether safe to continue\n            - warnings (List[str]): Jump-specific warnings\n        - final_state (dict):\n            - criticality_total (float): Final criticality value\n            - criticality_level (str): Final level name\n            - status_message (str): Final status description\n            - energization_time_minutes (float): Total energization time\n            - jump_count (int): Total jumps performed\n        - recommendations (List[str]): Tactical recommendations\n        - success (bool): True\n    \n    Error response (success=False):\n        - error (str): Error message\n        - validation_errors (List[str]): Validation error details\n        - success (bool): False\n    \nExample:\n    >>> result = short_range_sequential_jumps(\n    ...     jump_sequence=[\n    ...         {\"distance_meters\": 50000, \"charge_time_minutes\": 2.0},\n    ...         {\"distance_meters\": 75000, \"charge_time_minutes\": 2.5},\n    ...         {\"distance_meters\": 100000, \"charge_time_minutes\": 3.0}\n    ...     ],\n    ...     time_between_jumps_seconds=2.0,\n    ...     cochrane_field=350.0\n    ... )\n",
+        "inputSchema": {
+          "$defs": {
+            "JumpEntry": {
+              "description": "Single jump in a sequential jump sequence.",
+              "properties": {
+                "distance_meters": {
+                  "description": "Target jump distance for this leg in meters. Range: 1 to 4,500,000,000 (30 AU). Each jump in the sequence can have a different distance.",
+                  "maximum": 4500000000.0,
+                  "minimum": 1.0,
+                  "title": "Distance Meters",
+                  "type": "number"
+                },
+                "charge_time_minutes": {
+                  "description": "Core charge time for this specific jump in minutes. Range: 0.3 to 15.0. Each jump can have a different charge time. Longer charge times enable greater distances but increase criticality.",
+                  "maximum": 15.0,
+                  "minimum": 0.3,
+                  "title": "Charge Time Minutes",
+                  "type": "number"
+                },
+                "target_description": {
+                  "default": "",
+                  "description": "Optional human-readable label for this jump leg. Examples: 'Approach asteroid', 'Evade debris field', 'Final approach to station'. Defaults to empty string.",
+                  "title": "Target Description",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "distance_meters",
+                "charge_time_minutes"
+              ],
+              "title": "JumpEntry",
+              "type": "object"
+            }
+          },
+          "properties": {
+            "jump_sequence": {
+              "description": "Ordered list of jump objects defining the planned sequence. Each jump requires distance_meters (float, 1 to 4,500,000,000) and charge_time_minutes (float, 0.3 to 15.0). Optional per jump: target_description (string). The tool calculates cumulative criticality across all jumps and validates the sequence is safe.",
+              "items": {
+                "$ref": "#/$defs/JumpEntry"
+              },
+              "maxItems": 20,
+              "minItems": 1,
+              "title": "Jump Sequence",
+              "type": "array"
+            },
+            "cochrane_field": {
+              "default": 350.0,
+              "description": "Warp core coupling strength in millicochranes for all jumps. Range: 100 to 900. Defaults to 350.",
+              "maximum": 900.0,
+              "minimum": 100.0,
+              "title": "Cochrane Field",
+              "type": "number"
+            },
+            "phase_offset": {
+              "default": 0.75,
+              "description": "Phase offset for all jumps. Range: 0.00 to 1.00. Defaults to 0.75.",
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "title": "Phase Offset",
+              "type": "number"
+            },
+            "subspace_resonance": {
+              "default": 47.23,
+              "description": "Subspace resonance frequency in THz for all jumps. Range: 3.0 to 113.0. Defaults to 47.23.",
+              "maximum": 113.0,
+              "minimum": 3.0,
+              "title": "Subspace Resonance",
+              "type": "number"
+            },
+            "magellan_field": {
+              "default": 500.0,
+              "description": "Red matter field strength in Magellans for all jumps. Range: 100 to 2000. Defaults to 500.",
+              "maximum": 2000.0,
+              "minimum": 100.0,
+              "title": "Magellan Field",
+              "type": "number"
+            }
+          },
+          "required": [
+            "jump_sequence"
+          ],
+          "title": "short_range_sequential_jumpsArguments",
+          "type": "object"
+        }
+      },
+      {
+        "name": "short_range_optimize_cochrane",
+        "description": "\nFind optimal Cochrane field settings for current conditions.\n\nThis tool identifies safe Cochrane field ranges based on phase offset and\nsubspace resonance, then ranks them according to the specified optimization\ngoal. It helps tactical officers select the best Cochrane field value for\nmaximum efficiency, distance, or safety.\n\nOptimization goals:\n- \"efficiency\": Maximize Cochrane coupling efficiency \u00ce\u00b7(C)\n- \"distance\": Maximize achievable distance (requires charge_time_minutes)\n- \"field\": Minimize required field strength (requires target_distance_meters)\n- \"safety\": Maximize safe tolerance \u00ce\u00b6(C)\n\nArgs:\n    phase_offset: Phase offset 0.00-1.00 (default: 0.75)\n    subspace_resonance: Subspace resonance frequency in THz (default: 47.23)\n    optimization_goal: Optimization strategy (default: \"efficiency\")hrane field selection. Controls which \n        metric is used to rank safe operating zones. Valid values:\n        \n        - \"efficiency\" (default): Rank zones by average Cochrane coupling efficiency (\u00ce\u00b7). \n          Maximizes energy transfer from warp core to red matter system. Best for standard \n          tactical operations.\n        \n        - \"distance\": Rank zones by maximum achievable jump distance within the zone.\n          Best when maximum range is the priority. Requires charge_time_minutes parameter.\n        \n        - \"field\": Rank zones by minimum required Magellan field strength to reach the\n          target distance. Best when conserving red matter core output. Requires \n          target_distance_meters parameter.\n        \n        - \"safety\": Rank zones by average safe tolerance margin, minimizing criticality\n          risk. Best for high-jump-count sequences or when core is already under stress.\n        \n        Defaults to \"efficiency\" if not specified.\n    min_efficiency: Minimum acceptable efficiency threshold (default: 0.5)\n\nReturns:\n    Dict[str, Any]: Response dictionary with the following structure:\n    \n    Success response (success=True):\n        - safe_zones (List[dict]): Safe Cochrane ranges with analysis:\n            - zone_start (float): Starting Cochrane value (millicochranes)\n            - zone_end (float): Ending Cochrane value (millicochranes)\n            - zone_width (float): Width of safe zone\n            - avg_efficiency (float): Average coupling efficiency\n            - avg_tolerance (float): Average safe tolerance\n            - avg_distance_meters (float): Average distance (if applicable)\n            - max_distance_meters (float): Maximum distance (if applicable)\n            - max_distance_cochrane (float): Cochrane for max distance\n            - avg_required_field (float): Average field (if applicable)\n            - min_required_field (float): Minimum field (if applicable)\n            - min_field_cochrane (float): Cochrane for min field\n            - rank (int): Zone ranking (1 = best)\n            - optimization_score (float): Score for ranking\n        - optimal_cochrane_field (float): Best Cochrane value overall\n        - optimal_zone_index (int): Index of best zone\n        - optimization_goal (str): Goal used for ranking\n        - danger_zones (List[str]): Active danger zone warnings\n        - recommendations (List[str]): Tactical recommendations\n        - success (bool): True\n    \n    Error response (success=False):\n        - error (str): Error message\n        - validation_errors (List[str]): Validation error details (if applicable)\n        - phase_offset (float): Phase offset used (if applicable)\n        - subspace_resonance (float): Resonance used (if applicable)\n        - recommendations (List[str]): Suggestions (if applicable)\n        - success (bool): False\n\nExample:\n    >>> result = short_range_optimize_cochrane(\n    ...     phase_offset=0.75,\n    ...     subspace_resonance=47.23,\n    ...     charge_time_minutes=2.0,\n    ...     optimization_goal=\"distance\"\n    ... )\n    >>> print(f\"Optimal Cochrane: {result['optimal_cochrane_field']}\")\n    Optimal Cochrane: 425.0 millicochranes\n",
+        "inputSchema": {
+          "properties": {
+            "phase_offset": {
+              "default": 0.75,
+              "description": "Phase offset for optimization. Range: 0.00 to 1.00. Defaults to 0.75. The tool identifies safe Cochrane zones for this phase offset.",
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "title": "Phase Offset",
+              "type": "number"
+            },
+            "subspace_resonance": {
+              "default": 47.23,
+              "description": "Subspace resonance frequency in THz. Range: 3.0 to 113.0. Defaults to 47.23. The tool identifies safe Cochrane zones for this resonance.",
+              "maximum": 113.0,
+              "minimum": 3.0,
+              "title": "Subspace Resonance",
+              "type": "number"
+            },
+            "optimization_goal": {
+              "default": "efficiency",
+              "description": "Optimization strategy for Cochrane field selection. Defaults to efficiency. efficiency: Rank zones by average Cochrane coupling efficiency (standard operations, maximizes power utilization). distance: Rank zones by maximum achievable jump distance (use when range is the priority). field: Rank zones by minimum required Magellan field strength (best for conserving core output). safety: Rank zones by safe tolerance margin (use when criticality is already elevated or maximum safety is required).",
+              "enum": [
+                "efficiency",
+                "distance",
+                "field",
+                "safety"
+              ],
+              "title": "Optimization Goal",
+              "type": "string"
+            }
+          },
+          "title": "short_range_optimize_cochraneArguments",
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "result": {
+              "additionalProperties": true,
+              "title": "Result",
+              "type": "object"
+            }
+          },
+          "required": [
+            "result"
+          ],
+          "title": "short_range_optimize_cochraneOutput",
+          "type": "object"
+        }
+      }
+    ]
+  }
+}

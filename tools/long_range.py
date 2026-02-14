@@ -5,10 +5,8 @@ This module provides tools for calculating long-range jump distances and
 required field strengths using the Blackwell Drive equation.
 """
 
-from tools.models.long_range_models import (
-    LongRangeJumpDistanceArgs,
-    LongRangeFieldStrengthArgs
-)
+from typing import Annotated
+from pydantic import Field
 
 
 def long_range_describe() -> dict:
@@ -142,7 +140,21 @@ def long_range_describe() -> dict:
     }
 
 
-def long_range_jump_distance(args: LongRangeJumpDistanceArgs) -> dict:
+def long_range_jump_distance(
+    field_strength_magellans: Annotated[float, Field(
+        description=(
+            "Red matter field strength in Magellans. The Magellan (M) measures "
+            "the field intensity required to flex one cubic meter of spacetime "
+            "by one Planck length. Range: 200.01 to 3,000,000. Safe operating "
+            "range: 500 to 2,000,000. Values ≤200 cause equation failure (safety "
+            "threshold M₀). Values 200-500 are extremely dangerous (high fold "
+            "collapse risk). Values >2,000,000 exceed safe limits (core "
+            "destabilization risk). Values >3,000,000 cause catastrophic overload."
+        ),
+        gt=200.0,
+        le=3_000_000.0
+    )]
+) -> dict:
     """
     Calculate jump distance for a given field strength.
     
@@ -150,7 +162,7 @@ def long_range_jump_distance(args: LongRangeJumpDistanceArgs) -> dict:
     how far the USS Blackwell can travel with the specified field strength.
     
     Args:
-        args: LongRangeJumpDistanceArgs containing field_strength_magellans
+        field_strength_magellans: Red matter field strength in Magellans
         
     Returns:
         dict: Calculation results or error response
@@ -189,8 +201,7 @@ def long_range_jump_distance(args: LongRangeJumpDistanceArgs) -> dict:
     from calculator.equations import calculate_jump_distance, get_efficiency_factor
     from calculator.safety import classify_safety_status, generate_warnings, calculate_power_utilization
     
-    # Extract field_strength_magellans from args
-    field_strength_magellans = args.field_strength_magellans
+    # field_strength_magellans is now a direct parameter, no need to extract from args
     
     # Classify safety status first (for error responses)
     safety_status = classify_safety_status(field_strength_magellans)
@@ -254,19 +265,29 @@ def long_range_jump_distance(args: LongRangeJumpDistanceArgs) -> dict:
     }
 
 
-def long_range_field_strength(args: LongRangeFieldStrengthArgs) -> dict:
+def long_range_field_strength(
+    target_distance_light_years: Annotated[float, Field(
+        description=(
+            "Target jump distance in light-years. Must be positive. The system "
+            "uses Newton-Raphson iteration to calculate the required field "
+            "strength. Typical range: 1 to 50,000 light-years. Distances >50,000 "
+            "may require field strengths exceeding safe limits."
+        ),
+        gt=0.0
+    )]
+) -> dict:
     """
     Calculate required field strength for a target distance.
-    
+
     Performs inverse calculation using Newton-Raphson iteration to determine
     the field strength needed to reach the specified distance.
-    
+
     Args:
-        args: LongRangeFieldStrengthArgs containing target_distance_light_years
-        
+        target_distance_light_years: Target jump distance in light-years
+
     Returns:
         dict: Calculation results or error response
-        
+
         Success response contains:
             - field_strength_magellans (float): Calculated field strength
             - field_strength_formatted (str): Human-readable formatted string
@@ -277,13 +298,13 @@ def long_range_field_strength(args: LongRangeFieldStrengthArgs) -> dict:
             - safety_status (str): Safety classification
             - warnings (list[str]): Warning messages (empty if safe)
             - success (bool): True
-            
+
         Error response contains:
             - distance_light_years (float): Echo of input
             - error (str): Human-readable error message
             - warnings (list[str]): Empty list
             - success (bool): False
-            
+
     Requirements:
         - 6.1: Calculate field strength using Newton-Raphson iteration
         - 6.2: Return error if target distance is zero or negative
@@ -298,10 +319,9 @@ def long_range_field_strength(args: LongRangeFieldStrengthArgs) -> dict:
     """
     from calculator.equations import calculate_field_strength, format_field_strength, get_efficiency_factor
     from calculator.safety import classify_safety_status, generate_warnings, calculate_power_utilization
-    
-    # Extract target_distance_light_years from args
-    target_distance_light_years = args.target_distance_light_years
-    
+
+    # target_distance_light_years is now a direct parameter
+
     # Validate input: D > 0
     if target_distance_light_years <= 0:
         return {
@@ -310,7 +330,7 @@ def long_range_field_strength(args: LongRangeFieldStrengthArgs) -> dict:
             "warnings": [],
             "success": False
         }
-    
+
     # Calculate field strength using Newton-Raphson
     try:
         field_strength = calculate_field_strength(target_distance_light_years)
@@ -321,10 +341,10 @@ def long_range_field_strength(args: LongRangeFieldStrengthArgs) -> dict:
             "warnings": [],
             "success": False
         }
-    
+
     # Format field strength
     formatted_strength = format_field_strength(field_strength)
-    
+
     # Get efficiency factor and determine zone
     efficiency_factor = get_efficiency_factor(field_strength)
     if field_strength < 1_000.0:
@@ -333,16 +353,16 @@ def long_range_field_strength(args: LongRangeFieldStrengthArgs) -> dict:
         efficiency_zone = "optimal"
     else:
         efficiency_zone = "diminishing"
-    
+
     # Classify safety status
     safety_status = classify_safety_status(field_strength)
-    
+
     # Generate warnings
     warnings = generate_warnings(field_strength, safety_status)
-    
+
     # Calculate power utilization
     power_utilization = calculate_power_utilization(field_strength)
-    
+
     # Return success response
     return {
         "field_strength_magellans": field_strength,
@@ -355,3 +375,5 @@ def long_range_field_strength(args: LongRangeFieldStrengthArgs) -> dict:
         "warnings": warnings,
         "success": True
     }
+
+

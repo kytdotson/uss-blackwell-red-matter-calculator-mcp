@@ -16,15 +16,11 @@ The tactical system involves:
 - Complex coordinate transformation matrices
 """
 
-from typing import Dict, List, Literal, Optional, Tuple, Any
+from typing import Annotated, Dict, List, Literal, Optional, Tuple, Any
+from pydantic import Field
 
 # Pydantic model imports for parameter validation
 from tools.models.short_range_models import (
-    ShortRangeJumpDistanceArgs,
-    ShortRangeFieldStrengthArgs,
-    ShortRangeCriticalityArgs,
-    ShortRangeSequentialJumpsArgs,
-    ShortRangeOptimizeCochraneArgs,
     JumpEntry,
 )
 
@@ -524,7 +520,97 @@ def short_range_describe() -> Dict[str, Any]:
     }
 
 
-def short_range_jump_distance(args: ShortRangeJumpDistanceArgs) -> Dict[str, Any]:
+def short_range_jump_distance(
+    charge_time_minutes: Annotated[float, Field(
+        description=(
+            "Charge accumulation time in minutes. Controls how long the red "
+            "matter core accumulates energy before jump execution. Range: 0.3 to "
+            "15.0. Safe operating range: 0.3 to 10.0. Longer charge times enable "
+            "greater distances but increase criticality risk exponentially. "
+            "Values >10.0 generate criticality warnings due to quantum scarring "
+            "accumulation."
+        ),
+        ge=0.3,
+        le=15.0
+    )],
+    cochrane_field: Annotated[float, Field(
+        default=350.0,
+        description=(
+            "Warp core coupling strength in millicochranes. Controls the warp "
+            "core's power contribution to the tactical jump system. Range: 100 to "
+            "900. Defaults to 350. Note: 1000 millicochranes = Warp Factor 1.0. "
+            "Safe zones vary with phase_offset and subspace_resonance due to "
+            "harmonic interactions. Use short_range_optimize_cochrane() to "
+            "identify safe zones for current conditions. Avoid values where "
+            "sin(πC/C_max) approaches zero (null zones)."
+        ),
+        ge=100.0,
+        le=900.0
+    )] = 350.0,
+    phase_offset: Annotated[float, Field(
+        default=0.75,
+        description=(
+            "Phase offset controlling temporal alignment between red matter core "
+            "oscillations and warp field harmonics. Range: 0.00 to 1.00. Defaults "
+            "to 0.75 (optimal). The optimal value of 0.75 provides maximum "
+            "stability and coupling efficiency. Deviation increases criticality "
+            "risk and reduces phase-resonance coupling. Affects Cochrane coupling "
+            "efficiency, shifts resonance danger zones by ±5 THz per 0.1 deviation, "
+            "and impacts coordinate accuracy through flexure matrix."
+        ),
+        ge=0.0,
+        le=1.0
+    )] = 0.75,
+    subspace_resonance: Annotated[float, Field(
+        default=47.23,
+        description=(
+            "Subspace resonance frequency in THz (terahertz). Represents the "
+            "local quantum oscillation rate of the subspace fabric. Range: 3.0 to "
+            "113.0 THz. Defaults to 47.23 (second harmonic peak). This value "
+            "varies by stellar region and must be measured before tactical "
+            "operations. Optimal zones (harmonic peaks): 25, 47, 72, 95 THz. "
+            "Null zones (near-zero modulation): 0, 56.5, 113 THz. Danger zones "
+            "(base): 14, 28, 42, 56, 70, 84, 98 THz (shift by (φ-0.75)×5 based "
+            "on phase_offset)."
+        ),
+        ge=3.0,
+        le=113.0
+    )] = 47.23,
+    magellan_field: Annotated[Optional[float], Field(
+        default=None,
+        description=(
+            "Instantaneous red matter field strength in Magellans at jump "
+            "execution. Optional. If not provided, defaults to 500.0 (typical "
+            "tactical field strength). Range: 100 to 2000 typical for tactical "
+            "jumps. Unlike long-range jumps, tactical jumps use charge density "
+            "multiplication, so lower field strengths are sufficient."
+        )
+    )] = None,
+    energization_time: Annotated[float, Field(
+        default=0.0,
+        description=(
+            "Minutes since red matter core energization. Used for criticality "
+            "tracking. Range: 0.0 to 60.0. Defaults to 0.0 (first jump in "
+            "sequence). Criticality accumulates exponentially with energization "
+            "time. Core de-energization required for quantum scarring recovery."
+        ),
+        ge=0.0,
+        le=60.0
+    )] = 0.0,
+    jump_count: Annotated[int, Field(
+        default=0,
+        description=(
+            "Number of previous jumps performed during current energization "
+            "period. Used for cumulative quantum scarring calculation. Range: 0 "
+            "to 20. Defaults to 0 (first jump). Each jump creates microscopic "
+            "tears in subspace fabric that accumulate exponentially. Safe "
+            "sequence: 3-5 jumps. Maximum recommended: 7 jumps before "
+            "de-energization."
+        ),
+        ge=0,
+        le=20
+    )] = 0
+) -> Dict[str, Any]:
     """
     Calculate achievable distance for a tactical jump given charge time and parameters.
 
@@ -537,7 +623,7 @@ def short_range_jump_distance(args: ShortRangeJumpDistanceArgs) -> Dict[str, Any
         cochrane_field: Cochrane guide field in millicochranes (default: 350.0)
         phase_offset: Phase offset 0.00-1.00 (default: 0.75)
         subspace_resonance: Subspace resonance frequency in THz (default: 47.23)
-        magellan_field: Instantaneous Magellan field if known (optional, default: 500.0)
+        magellan_field: Instantaneous Magellan field if known (optional, default: None)
         energization_time: Minutes since core energization (default: 0.0)
         jump_count: Number of previous jumps in sequence (default: 0)
 
@@ -594,15 +680,6 @@ def short_range_jump_distance(args: ShortRangeJumpDistanceArgs) -> Dict[str, Any
         Distance: 120.5 kilometers
     """
     try:
-        # Extract parameters from Pydantic model
-        charge_time_minutes = args.charge_time_minutes
-        cochrane_field = args.cochrane_field
-        phase_offset = args.phase_offset
-        subspace_resonance = args.subspace_resonance
-        magellan_field = args.magellan_field
-        energization_time = args.energization_time
-        jump_count = args.jump_count
-        
         # Subtask 16.2: Validate input parameters
         is_valid, validation_errors = validate_tactical_parameters(
             charge_time=charge_time_minutes,
@@ -801,7 +878,47 @@ def short_range_jump_distance(args: ShortRangeJumpDistanceArgs) -> Dict[str, Any
         }
 
 
-def short_range_field_strength(args: ShortRangeFieldStrengthArgs) -> Dict[str, Any]:
+def short_range_field_strength(
+    target_distance_meters: Annotated[float, Field(
+        description=(
+            "Target tactical jump distance in meters. Range: 1 to 4,500,000,000 "
+            "(30 AU). Tactical jumps operate from 1 meter to 30 AU using "
+            "quantum-scale subspace resonances. The system uses Newton-Raphson "
+            "iteration to calculate required field strength and charge time."
+        ),
+        ge=1.0,
+        le=4_500_000_000.0
+    )],
+    cochrane_field: Annotated[float, Field(
+        default=350.0,
+        description=(
+            "Warp core coupling strength in millicochranes. Range: 100 to 900. "
+            "Defaults to 350. See short_range_jump_distance for detailed "
+            "description."
+        ),
+        ge=100.0,
+        le=900.0
+    )] = 350.0,
+    phase_offset: Annotated[float, Field(
+        default=0.75,
+        description=(
+            "Phase offset for temporal alignment. Range: 0.00 to 1.00. Defaults "
+            "to 0.75 (optimal). See short_range_jump_distance for detailed "
+            "description."
+        ),
+        ge=0.0,
+        le=1.0
+    )] = 0.75,
+    subspace_resonance: Annotated[float, Field(
+        default=47.23,
+        description=(
+            "Subspace resonance frequency in THz. Range: 3.0 to 113.0. Defaults "
+            "to 47.23. See short_range_jump_distance for detailed description."
+        ),
+        ge=3.0,
+        le=113.0
+    )] = 47.23
+) -> Dict[str, Any]:
     """
     Calculate required field strength for a target distance (inverse calculation).
     
@@ -811,12 +928,9 @@ def short_range_field_strength(args: ShortRangeFieldStrengthArgs) -> Dict[str, A
     
     Args:
         target_distance_meters: Desired jump distance in meters (required)
-        charge_time_minutes: Charge duration in minutes (required)
         cochrane_field: Cochrane guide field in millicochranes (default: 350.0)
         phase_offset: Phase offset 0.00-1.00 (default: 0.75)
         subspace_resonance: Subspace resonance frequency in THz (default: 47.23)
-        energization_time: Minutes since core energization (default: 0.0)
-        jump_count: Number of previous jumps in sequence (default: 0)
     
     Returns:
         Dict[str, Any]: Response dictionary with the following structure:
@@ -864,12 +978,6 @@ def short_range_field_strength(args: ShortRangeFieldStrengthArgs) -> Dict[str, A
         Required field: 612.3 Magellans
     """
     try:
-        # Extract parameters from Pydantic model
-        target_distance_meters = args.target_distance_meters
-        cochrane_field = args.cochrane_field
-        phase_offset = args.phase_offset
-        subspace_resonance = args.subspace_resonance
-        
         # ShortRangeFieldStrengthArgs doesn't have these fields, so we use defaults
         charge_time_minutes = 2.0  # Default charge time for field strength calculation
         energization_time = 0.0
@@ -1094,7 +1202,73 @@ def short_range_field_strength(args: ShortRangeFieldStrengthArgs) -> Dict[str, A
         }
 
 
-def short_range_criticality(args: ShortRangeCriticalityArgs) -> Dict[str, Any]:
+def short_range_criticality(
+    energization_time_minutes: Annotated[float, Field(
+        description=(
+            "Minutes since red matter core energization. Range: 0.0 to 60.0. "
+            "Criticality grows exponentially with energization time. Used to "
+            "calculate red matter criticality component and estimate time to "
+            "criticality thresholds."
+        ),
+        ge=0.0,
+        le=60.0
+    )],
+    jump_count: Annotated[int, Field(
+        description=(
+            "Number of jumps performed during current energization period. "
+            "Range: 0 to 20. Each jump contributes to cumulative quantum "
+            "scarring with exponentially increasing impact."
+        ),
+        ge=0,
+        le=20
+    )],
+    magellan_field: Annotated[float, Field(
+        description=(
+            "Current red matter field strength in Magellans. Range: 100 to 2000 "
+            "typical for tactical operations. Used to calculate interaction "
+            "factor between red matter and warp core systems."
+        ),
+        ge=100.0,
+        le=2000.0
+    )],
+    cochrane_field: Annotated[float, Field(
+        default=350.0,
+        description=(
+            "Warp core coupling strength in millicochranes. Range: 100 to 900. "
+            "Defaults to 350. Higher values increase warp core stress component "
+            "of criticality."
+        ),
+        ge=100.0,
+        le=900.0
+    )] = 350.0,
+    phase_offset: Annotated[float, Field(
+        default=0.75,
+        description=(
+            "Phase offset. Range: 0.00 to 1.00. Defaults to 0.75. Affects "
+            "criticality modifier through phase-resonance coupling."
+        ),
+        ge=0.0,
+        le=1.0
+    )] = 0.75,
+    subspace_resonance: Annotated[float, Field(
+        default=47.23,
+        description=(
+            "Subspace resonance frequency in THz. Range: 3.0 to 113.0. Defaults "
+            "to 47.23. Affects criticality modifier through resonance modulation."
+        ),
+        ge=3.0,
+        le=113.0
+    )] = 47.23,
+    charge_time_minutes: Annotated[float, Field(
+        default=2.0,
+        description=(
+            "Charge time for criticality calculation in minutes. Range: 0.3 to "
+            "15.0. Defaults to 2.0. Used to calculate warp core stress component."
+        ),
+        ge=0.3,
+        le=15.0
+    )] = 2.0
+) -> Dict[str, Any]:
     """
     Assess criticality risk for current or planned operational state.
     
@@ -1109,6 +1283,7 @@ def short_range_criticality(args: ShortRangeCriticalityArgs) -> Dict[str, Any]:
         cochrane_field: Cochrane guide field in millicochranes (default: 350.0)
         phase_offset: Phase offset 0.00-1.00 (default: 0.75)
         subspace_resonance: Subspace resonance frequency in THz (default: 47.23)
+        charge_time_minutes: Charge time for criticality calculation (default: 2.0)
     
     Returns:
         Dict[str, Any]: Response dictionary with the following structure:
@@ -1151,15 +1326,6 @@ def short_range_criticality(args: ShortRangeCriticalityArgs) -> Dict[str, Any]:
         Criticality: WARNING
     """
     try:
-        # Extract parameters from Pydantic model
-        energization_time_minutes = args.energization_time_minutes
-        jump_count = args.jump_count
-        magellan_field = args.magellan_field
-        cochrane_field = args.cochrane_field
-        phase_offset = args.phase_offset
-        subspace_resonance = args.subspace_resonance
-        charge_time_minutes = args.charge_time_minutes
-        
         # Subtask 18.2: Validate input parameters
         is_valid, validation_errors = validate_tactical_parameters(
             charge_time=None,  # Not applicable for criticality assessment
@@ -1421,7 +1587,54 @@ def short_range_criticality(args: ShortRangeCriticalityArgs) -> Dict[str, Any]:
         }
 
 
-def short_range_sequential_jumps(args: ShortRangeSequentialJumpsArgs) -> dict:
+def short_range_sequential_jumps(
+    jump_sequence: Annotated[list[JumpEntry], Field(
+        description=(
+            "Ordered list of jump objects defining the planned sequence. Each "
+            "jump requires distance_meters (float, 1 to 4,500,000,000) and "
+            "charge_time_minutes (float, 0.3 to 15.0). Optional per jump: "
+            "target_description (string). The tool calculates cumulative "
+            "criticality across all jumps and validates the sequence is safe."
+        ),
+        min_length=1,
+        max_length=20
+    )],
+    cochrane_field: Annotated[float, Field(
+        default=350.0,
+        description=(
+            "Warp core coupling strength in millicochranes for all jumps. "
+            "Range: 100 to 900. Defaults to 350."
+        ),
+        ge=100.0,
+        le=900.0
+    )] = 350.0,
+    phase_offset: Annotated[float, Field(
+        default=0.75,
+        description=(
+            "Phase offset for all jumps. Range: 0.00 to 1.00. Defaults to 0.75."
+        ),
+        ge=0.0,
+        le=1.0
+    )] = 0.75,
+    subspace_resonance: Annotated[float, Field(
+        default=47.23,
+        description=(
+            "Subspace resonance frequency in THz for all jumps. Range: 3.0 to "
+            "113.0. Defaults to 47.23."
+        ),
+        ge=3.0,
+        le=113.0
+    )] = 47.23,
+    magellan_field: Annotated[float, Field(
+        default=500.0,
+        description=(
+            "Red matter field strength in Magellans for all jumps. Range: 100 to "
+            "2000. Defaults to 500."
+        ),
+        ge=100.0,
+        le=2000.0
+    )] = 500.0
+) -> dict:
     """
     Plan and analyze a sequence of multiple tactical jumps.
     
@@ -1437,46 +1650,11 @@ def short_range_sequential_jumps(args: ShortRangeSequentialJumpsArgs) -> dict:
         then pass those values into the jump sequence.
     
     Args:
-        jump_sequence: List of jump specification objects. Each object in the array must be 
-            a dictionary with the following structure:
-            
-            REQUIRED fields (must be present in every jump object):
-              - distance_meters (float): Target jump distance in meters. 
-                Valid range: 1.0 to 4,500,000,000.0 meters (1 meter to 30 AU).
-                Use short_range_jump_distance() to calculate this from charge time and field 
-                strength if not already known.
-              
-              - charge_time_minutes (float): Core charge time for this jump in minutes.
-                Valid range: 0.3 to 15.0 minutes.
-            
-            OPTIONAL fields:
-              - target_description (string): Human-readable label for this jump leg 
-                (e.g., "Approach vector", "Extraction point"). Used in output for 
-                readability only. If omitted, jumps are labeled by number.
-            
-            Note: The magellan_field is calculated automatically based on distance and 
-            charge time, so it should NOT be provided in jump objects.
-            
-            Example jump object with all fields:
-              {
-                "distance_meters": 500000000.0,
-                "charge_time_minutes": 2.0,
-                "target_description": "Flank position Alpha"
-              }
-            
-            Example minimal jump object (required fields only):
-              {
-                "distance_meters": 150000.0,
-                "charge_time_minutes": 1.5
-              }
-            
-            Note: Cochrane field, phase offset, and subspace resonance are shared across 
-            all jumps in the sequence and are passed as top-level parameters, not per-jump.
-        
-        time_between_jumps_seconds: Delay between jumps (default: 2.0)
+        jump_sequence: List of JumpEntry objects with distance_meters, charge_time_minutes, and optional target_description
         cochrane_field: Cochrane guide field in millicochranes (default: 350.0)
         phase_offset: Phase offset 0.00-1.00 (default: 0.75)
         subspace_resonance: Subspace resonance in THz (default: 47.23)
+        magellan_field: Red matter field strength in Magellans (default: 500.0)
     
     Returns:
         Dict[str, Any]: Response dictionary with the following structure:
@@ -1531,36 +1709,29 @@ def short_range_sequential_jumps(args: ShortRangeSequentialJumpsArgs) -> dict:
         ... )
     """
     try:
-        # Extract parameters from Pydantic model
-        jump_sequence_entries = args.jump_sequence
-        cochrane_field = args.cochrane_field
-        phase_offset = args.phase_offset
-        subspace_resonance = args.subspace_resonance
-        magellan_field = args.magellan_field
-        
         # Convert JumpEntry objects to dict format expected by the rest of the function
-        jump_sequence = []
-        for entry in jump_sequence_entries:
+        jump_sequence_list = []
+        for entry in jump_sequence:
             jump_dict = {
                 "distance_meters": entry.distance_meters,
                 "charge_time_minutes": entry.charge_time_minutes,
             }
             if entry.target_description:
                 jump_dict["target_description"] = entry.target_description
-            jump_sequence.append(jump_dict)
+            jump_sequence_list.append(jump_dict)
         
         # Default time between jumps (not in model, using hardcoded default)
         time_between_jumps_seconds = 2.0
         
         # Subtask 19.2: Validate jump sequence
-        if not jump_sequence or not isinstance(jump_sequence, list):
+        if not jump_sequence_list or not isinstance(jump_sequence_list, list):
             return {
                 "error": "Jump sequence must be a non-empty list",
                 "validation_errors": ["jump_sequence is required and must be a list"],
                 "success": False
             }
         
-        if len(jump_sequence) == 0:
+        if len(jump_sequence_list) == 0:
             return {
                 "error": "Jump sequence cannot be empty",
                 "validation_errors": ["At least one jump must be specified"],
@@ -1569,7 +1740,7 @@ def short_range_sequential_jumps(args: ShortRangeSequentialJumpsArgs) -> dict:
         
         # Validate each jump in sequence
         validation_errors = []
-        for i, jump in enumerate(jump_sequence):
+        for i, jump in enumerate(jump_sequence_list):
             if not isinstance(jump, dict):
                 validation_errors.append(f"Jump {i+1}: Must be a dictionary")
                 continue
@@ -1636,7 +1807,7 @@ def short_range_sequential_jumps(args: ShortRangeSequentialJumpsArgs) -> dict:
         sequence_safe = True
         
         # Subtask 19.4: Loop through each jump in sequence
-        for jump_index, jump in enumerate(jump_sequence):
+        for jump_index, jump in enumerate(jump_sequence_list):
             distance_meters = jump["distance_meters"]
             charge_time_minutes = jump["charge_time_minutes"]
             
@@ -1766,7 +1937,7 @@ def short_range_sequential_jumps(args: ShortRangeSequentialJumpsArgs) -> dict:
                 sequence_safe = False
             
             # Add time between jumps (except after last jump)
-            if jump_index < len(jump_sequence) - 1:
+            if jump_index < len(jump_sequence_list) - 1:
                 energization_time += time_between_jumps_minutes
         
         # Subtask 19.10: Calculate final state
@@ -1830,7 +2001,7 @@ def short_range_sequential_jumps(args: ShortRangeSequentialJumpsArgs) -> dict:
                     f"ABORT: Jump sequence becomes unsafe at jump {critical_jump_index + 1}"
                 )
                 recommendations.append(
-                    f"Maximum safe jumps: {critical_jump_index} of {len(jump_sequence)} requested"
+                    f"Maximum safe jumps: {critical_jump_index} of {len(jump_sequence_list)} requested"
                 )
             else:
                 recommendations.append("ABORT: Jump sequence contains unachievable jumps")
@@ -1884,7 +2055,7 @@ def short_range_sequential_jumps(args: ShortRangeSequentialJumpsArgs) -> dict:
         # Subtask 19.12: Build response with all jump results
         return {
             "sequence_analysis": {
-                "total_jumps_requested": len(jump_sequence),
+                "total_jumps_requested": len(jump_sequence_list),
                 "jumps_feasible": jump_count,
                 "total_energization_time_minutes": energization_time,
                 "sequence_safe": sequence_safe,
@@ -1911,7 +2082,41 @@ def short_range_sequential_jumps(args: ShortRangeSequentialJumpsArgs) -> dict:
         }
 
 
-def short_range_optimize_cochrane(args: ShortRangeOptimizeCochraneArgs) -> Dict[str, Any]:
+def short_range_optimize_cochrane(
+    phase_offset: Annotated[float, Field(
+        default=0.75,
+        description=(
+            "Phase offset for optimization. Range: 0.00 to 1.00. Defaults to "
+            "0.75. The tool identifies safe Cochrane zones for this phase offset."
+        ),
+        ge=0.0,
+        le=1.0
+    )] = 0.75,
+    subspace_resonance: Annotated[float, Field(
+        default=47.23,
+        description=(
+            "Subspace resonance frequency in THz. Range: 3.0 to 113.0. Defaults "
+            "to 47.23. The tool identifies safe Cochrane zones for this resonance."
+        ),
+        ge=3.0,
+        le=113.0
+    )] = 47.23,
+    optimization_goal: Annotated[Literal["efficiency", "distance", "field", "safety"], Field(
+        default="efficiency",
+        description=(
+            "Optimization strategy for Cochrane field selection. Defaults to "
+            "efficiency. "
+            "efficiency: Rank zones by average Cochrane coupling efficiency "
+            "(standard operations, maximizes power utilization). "
+            "distance: Rank zones by maximum achievable jump distance (use when "
+            "range is the priority). "
+            "field: Rank zones by minimum required Magellan field strength (best "
+            "for conserving core output). "
+            "safety: Rank zones by safe tolerance margin (use when criticality "
+            "is already elevated or maximum safety is required)."
+        )
+    )] = "efficiency"
+) -> Dict[str, Any]:
     """
     Find optimal Cochrane field settings for current conditions.
     
@@ -1929,13 +2134,7 @@ def short_range_optimize_cochrane(args: ShortRangeOptimizeCochraneArgs) -> Dict[
     Args:
         phase_offset: Phase offset 0.00-1.00 (default: 0.75)
         subspace_resonance: Subspace resonance frequency in THz (default: 47.23)
-        charge_time_minutes: Charge duration in minutes for distance optimization. Type: number (float).
-            Valid range: 0.3 to 15.0 minutes. Optional parameter, but REQUIRED when 
-            optimization_goal="distance". Omit or pass null for other optimization goals.
-        target_distance_meters: Target jump distance in meters for field optimization. Type: number (float).
-            Valid range: 1.0 to 4,500,000,000.0 meters (1 meter to 30 AU). Optional parameter,
-            but REQUIRED when optimization_goal="field". Omit or pass null for other optimization goals.
-        optimization_goal: Optimization strategy for Cochrane field selection. Controls which 
+        optimization_goal: Optimization strategy (default: "efficiency")hrane field selection. Controls which 
             metric is used to rank safe operating zones. Valid values:
             
             - "efficiency" (default): Rank zones by average Cochrane coupling efficiency (η). 
@@ -1999,11 +2198,6 @@ def short_range_optimize_cochrane(args: ShortRangeOptimizeCochraneArgs) -> Dict[
         Optimal Cochrane: 425.0 millicochranes
     """
     try:
-        # Extract parameters from Pydantic model
-        phase_offset = args.phase_offset
-        subspace_resonance = args.subspace_resonance
-        optimization_goal = args.optimization_goal
-        
         # Parameters not in the model - using defaults
         charge_time_minutes = None
         target_distance_meters = None
