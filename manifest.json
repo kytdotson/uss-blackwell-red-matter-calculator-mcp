@@ -1,7 +1,7 @@
 {
   "name": "uss-blackwell-red-matter-core-calculator-mcp",
-  "version": "1.0.0",
-  "description": "MCP server for USS Blackwell red matter core dimensional fold calculations in the Star Trek fanfiction universe",
+  "version": "1.1.0",
+  "description": "MCP server for USS Blackwell red matter core dimensional fold calculations in the Star Trek fanfiction universe - includes long-range interstellar jumps and short-range tactical jumps",
   "author": "Kyt Dotson",
   "license": "MIT",
   "main": "server.py",
@@ -23,6 +23,30 @@
       {
         "name": "long_range_field_strength",
         "description": "Calculates required red matter field strength in Magellans for a target jump distance in light-years (inverse calculation)"
+      },
+      {
+        "name": "short_range_describe",
+        "description": "Provides comprehensive reference documentation about the tactical jump system including physics, adjustable parameters, equations, operational limits, criticality thresholds, and Rizan's Resonance Bridge Theory"
+      },
+      {
+        "name": "short_range_jump_distance",
+        "description": "Calculates achievable tactical jump distance in meters for given charge time and system parameters (forward calculation with criticality assessment)"
+      },
+      {
+        "name": "short_range_field_strength",
+        "description": "Calculates required Magellan field strength for target tactical jump distance using Newton-Raphson iteration (inverse calculation with feasibility assessment)"
+      },
+      {
+        "name": "short_range_criticality",
+        "description": "Assesses system criticality risk for current or planned operational state, providing detailed breakdown of red matter and warp core components with tactical recommendations"
+      },
+      {
+        "name": "short_range_sequential_jumps",
+        "description": "Plans and analyzes sequences of multiple tactical jumps, tracking cumulative criticality buildup and identifying when operations become unsafe"
+      },
+      {
+        "name": "short_range_optimize_cochrane",
+        "description": "Finds optimal Cochrane field settings for current phase offset and subspace resonance conditions, identifying safe operating zones"
       }
     ]
   },

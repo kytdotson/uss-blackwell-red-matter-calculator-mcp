@@ -42,7 +42,7 @@ def blackwell_describe() -> dict:
             "twitter": "http://x.com/kytsune",
             "bluesky": "https://bsky.app/profile/kytsune.bsky.social"
         },
-        "available_tool_categories": ["long_range"],
+        "available_tool_categories": ["long_range", "short_range"],
         "available_tools": [],  # Will be populated dynamically later
         "success": True
     }

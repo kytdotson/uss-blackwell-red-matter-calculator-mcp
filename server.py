@@ -20,6 +20,14 @@ from tools.long_range import (
     long_range_jump_distance,
     long_range_field_strength
 )
+from tools.short_range import (
+    short_range_describe,
+    short_range_jump_distance,
+    short_range_field_strength,
+    short_range_criticality,
+    short_range_sequential_jumps,
+    short_range_optimize_cochrane
+)
 
 # Full narrative description for the server instructions
 NARRATIVE_DESCRIPTION = (
@@ -30,8 +38,10 @@ NARRATIVE_DESCRIPTION = (
     "superweapon turned rescue vehicle. This MCP server was developed by Kyt Dotson, "
     "science fiction author, to allow LLMs to quickly perform calculations involving "
     "the red matter core in the Star Trek fanfiction universe — including long range "
-    "and short range jumps, translating objects within the red matter field, and "
-    "performing other strange miracles to execute the Blackwell's mission to save lives."
+    "interstellar jumps via dimensional folding and short range tactical jumps within "
+    "stellar systems using quantum-scale subspace resonances (Rizan's Resonance Bridge "
+    "Theory), translating objects within the red matter field, and performing other "
+    "strange miracles to execute the Blackwell's mission to save lives."
 )
 
 # Create MCP server instance
@@ -48,14 +58,25 @@ server.tool()(blackwell_describe)
 server.tool()(long_range_describe)
 server.tool()(long_range_jump_distance)
 server.tool()(long_range_field_strength)
+server.tool()(short_range_describe)
+server.tool()(short_range_jump_distance)
+server.tool()(short_range_field_strength)
+server.tool()(short_range_criticality)
+server.tool()(short_range_sequential_jumps)
+server.tool()(short_range_optimize_cochrane)
 
 if __name__ == "__main__":
-    # Run with stdio transport (for MCP clients)
-    #server.run(transport="stdio")
-
-    # Run with HTTP transport (for web clients)
-    server.run(
-    transport="streamable-http",
-    reload=False,
-    debug=False
-    )
+    # Check environment variable for transport mode
+    import os
+    transport_mode = os.environ.get("MCP_TRANSPORT", "http")
+    
+    if transport_mode == "stdio":
+        # Run with stdio transport (for MCP clients and testing)
+        server.run(transport="stdio", debug=True)
+    else:
+        # Run with HTTP transport (for web clients)
+        server.run(
+            transport="streamable-http",
+            reload=False,
+            debug=False
+        )
