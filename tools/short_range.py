@@ -18,6 +18,16 @@ The tactical system involves:
 
 from typing import Dict, List, Literal, Optional, Tuple, Any
 
+# Pydantic model imports for parameter validation
+from tools.models.short_range_models import (
+    ShortRangeJumpDistanceArgs,
+    ShortRangeFieldStrengthArgs,
+    ShortRangeCriticalityArgs,
+    ShortRangeSequentialJumpsArgs,
+    ShortRangeOptimizeCochraneArgs,
+    JumpEntry,
+)
+
 # Calculator module imports for tactical calculations
 from calculator.tactical import (
     # Modulation factors
@@ -514,15 +524,7 @@ def short_range_describe() -> Dict[str, Any]:
     }
 
 
-def short_range_jump_distance(
-    charge_time_minutes: float,
-    cochrane_field: float = 350.0,
-    phase_offset: float = 0.75,
-    subspace_resonance: float = 47.23,
-    magellan_field: Optional[float] = None,
-    energization_time: float = 0.0,
-    jump_count: int = 0
-) -> Dict[str, Any]:
+def short_range_jump_distance(args: ShortRangeJumpDistanceArgs) -> Dict[str, Any]:
     """
     Calculate achievable distance for a tactical jump given charge time and parameters.
 
@@ -592,6 +594,15 @@ def short_range_jump_distance(
         Distance: 120.5 kilometers
     """
     try:
+        # Extract parameters from Pydantic model
+        charge_time_minutes = args.charge_time_minutes
+        cochrane_field = args.cochrane_field
+        phase_offset = args.phase_offset
+        subspace_resonance = args.subspace_resonance
+        magellan_field = args.magellan_field
+        energization_time = args.energization_time
+        jump_count = args.jump_count
+        
         # Subtask 16.2: Validate input parameters
         is_valid, validation_errors = validate_tactical_parameters(
             charge_time=charge_time_minutes,
@@ -790,15 +801,7 @@ def short_range_jump_distance(
         }
 
 
-def short_range_field_strength(
-    target_distance_meters: float,
-    charge_time_minutes: float,
-    cochrane_field: float = 350.0,
-    phase_offset: float = 0.75,
-    subspace_resonance: float = 47.23,
-    energization_time: float = 0.0,
-    jump_count: int = 0
-) -> Dict[str, Any]:
+def short_range_field_strength(args: ShortRangeFieldStrengthArgs) -> Dict[str, Any]:
     """
     Calculate required field strength for a target distance (inverse calculation).
     
@@ -861,6 +864,17 @@ def short_range_field_strength(
         Required field: 612.3 Magellans
     """
     try:
+        # Extract parameters from Pydantic model
+        target_distance_meters = args.target_distance_meters
+        cochrane_field = args.cochrane_field
+        phase_offset = args.phase_offset
+        subspace_resonance = args.subspace_resonance
+        
+        # ShortRangeFieldStrengthArgs doesn't have these fields, so we use defaults
+        charge_time_minutes = 2.0  # Default charge time for field strength calculation
+        energization_time = 0.0
+        jump_count = 0
+        
         # Subtask 17.2: Validate input parameters
         is_valid, validation_errors = validate_tactical_parameters(
             charge_time=charge_time_minutes,
@@ -1080,14 +1094,7 @@ def short_range_field_strength(
         }
 
 
-def short_range_criticality(
-    energization_time_minutes: float,
-    jump_count: int,
-    magellan_field: float,
-    cochrane_field: float = 350.0,
-    phase_offset: float = 0.75,
-    subspace_resonance: float = 47.23
-) -> Dict[str, Any]:
+def short_range_criticality(args: ShortRangeCriticalityArgs) -> Dict[str, Any]:
     """
     Assess criticality risk for current or planned operational state.
     
@@ -1144,6 +1151,15 @@ def short_range_criticality(
         Criticality: WARNING
     """
     try:
+        # Extract parameters from Pydantic model
+        energization_time_minutes = args.energization_time_minutes
+        jump_count = args.jump_count
+        magellan_field = args.magellan_field
+        cochrane_field = args.cochrane_field
+        phase_offset = args.phase_offset
+        subspace_resonance = args.subspace_resonance
+        charge_time_minutes = args.charge_time_minutes
+        
         # Subtask 18.2: Validate input parameters
         is_valid, validation_errors = validate_tactical_parameters(
             charge_time=None,  # Not applicable for criticality assessment
@@ -1405,13 +1421,7 @@ def short_range_criticality(
         }
 
 
-def short_range_sequential_jumps(
-    jump_sequence: list[dict],
-    time_between_jumps_seconds: float = 2.0,
-    cochrane_field: float = 350.0,
-    phase_offset: float = 0.75,
-    subspace_resonance: float = 47.23
-) -> dict:
+def short_range_sequential_jumps(args: ShortRangeSequentialJumpsArgs) -> dict:
     """
     Plan and analyze a sequence of multiple tactical jumps.
     
@@ -1521,6 +1531,27 @@ def short_range_sequential_jumps(
         ... )
     """
     try:
+        # Extract parameters from Pydantic model
+        jump_sequence_entries = args.jump_sequence
+        cochrane_field = args.cochrane_field
+        phase_offset = args.phase_offset
+        subspace_resonance = args.subspace_resonance
+        magellan_field = args.magellan_field
+        
+        # Convert JumpEntry objects to dict format expected by the rest of the function
+        jump_sequence = []
+        for entry in jump_sequence_entries:
+            jump_dict = {
+                "distance_meters": entry.distance_meters,
+                "charge_time_minutes": entry.charge_time_minutes,
+            }
+            if entry.target_description:
+                jump_dict["target_description"] = entry.target_description
+            jump_sequence.append(jump_dict)
+        
+        # Default time between jumps (not in model, using hardcoded default)
+        time_between_jumps_seconds = 2.0
+        
         # Subtask 19.2: Validate jump sequence
         if not jump_sequence or not isinstance(jump_sequence, list):
             return {
@@ -1880,14 +1911,7 @@ def short_range_sequential_jumps(
         }
 
 
-def short_range_optimize_cochrane(
-    phase_offset: float = 0.75,
-    subspace_resonance: float = 47.23,
-    charge_time_minutes: Optional[float] = None,
-    target_distance_meters: Optional[float] = None,
-    optimization_goal: Literal["efficiency", "distance", "field", "safety"] = "efficiency",
-    min_efficiency: float = 0.5
-) -> Dict[str, Any]:
+def short_range_optimize_cochrane(args: ShortRangeOptimizeCochraneArgs) -> Dict[str, Any]:
     """
     Find optimal Cochrane field settings for current conditions.
     
@@ -1975,6 +1999,16 @@ def short_range_optimize_cochrane(
         Optimal Cochrane: 425.0 millicochranes
     """
     try:
+        # Extract parameters from Pydantic model
+        phase_offset = args.phase_offset
+        subspace_resonance = args.subspace_resonance
+        optimization_goal = args.optimization_goal
+        
+        # Parameters not in the model - using defaults
+        charge_time_minutes = None
+        target_distance_meters = None
+        min_efficiency = 0.5
+        
         # Subtask 20.2: Validate input parameters
         is_valid, validation_errors = validate_tactical_parameters(
             charge_time=charge_time_minutes,

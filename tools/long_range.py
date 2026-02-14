@@ -5,6 +5,11 @@ This module provides tools for calculating long-range jump distances and
 required field strengths using the Blackwell Drive equation.
 """
 
+from tools.models.long_range_models import (
+    LongRangeJumpDistanceArgs,
+    LongRangeFieldStrengthArgs
+)
+
 
 def long_range_describe() -> dict:
     """
@@ -137,7 +142,7 @@ def long_range_describe() -> dict:
     }
 
 
-def long_range_jump_distance(field_strength_magellans: float) -> dict:
+def long_range_jump_distance(args: LongRangeJumpDistanceArgs) -> dict:
     """
     Calculate jump distance for a given field strength.
     
@@ -145,7 +150,7 @@ def long_range_jump_distance(field_strength_magellans: float) -> dict:
     how far the USS Blackwell can travel with the specified field strength.
     
     Args:
-        field_strength_magellans: Red matter field strength in Magellans
+        args: LongRangeJumpDistanceArgs containing field_strength_magellans
         
     Returns:
         dict: Calculation results or error response
@@ -183,6 +188,9 @@ def long_range_jump_distance(field_strength_magellans: float) -> dict:
     from calculator.constants import M0, MAX_ABSOLUTE_MAGELLANS
     from calculator.equations import calculate_jump_distance, get_efficiency_factor
     from calculator.safety import classify_safety_status, generate_warnings, calculate_power_utilization
+    
+    # Extract field_strength_magellans from args
+    field_strength_magellans = args.field_strength_magellans
     
     # Classify safety status first (for error responses)
     safety_status = classify_safety_status(field_strength_magellans)
@@ -246,7 +254,7 @@ def long_range_jump_distance(field_strength_magellans: float) -> dict:
     }
 
 
-def long_range_field_strength(target_distance_light_years: float) -> dict:
+def long_range_field_strength(args: LongRangeFieldStrengthArgs) -> dict:
     """
     Calculate required field strength for a target distance.
     
@@ -254,7 +262,7 @@ def long_range_field_strength(target_distance_light_years: float) -> dict:
     the field strength needed to reach the specified distance.
     
     Args:
-        target_distance_light_years: Target jump distance in light-years
+        args: LongRangeFieldStrengthArgs containing target_distance_light_years
         
     Returns:
         dict: Calculation results or error response
@@ -290,6 +298,9 @@ def long_range_field_strength(target_distance_light_years: float) -> dict:
     """
     from calculator.equations import calculate_field_strength, format_field_strength, get_efficiency_factor
     from calculator.safety import classify_safety_status, generate_warnings, calculate_power_utilization
+    
+    # Extract target_distance_light_years from args
+    target_distance_light_years = args.target_distance_light_years
     
     # Validate input: D > 0
     if target_distance_light_years <= 0:
