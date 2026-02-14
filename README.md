@@ -14,11 +14,20 @@ Fanfiction universe available on Archive of Our Own (AO3) at [Star Trek: Blackwe
 
 ## Features
 
+### Long-Range Dimensional Fold Jumps
 - **Forward Calculation**: Calculate jump distance from field strength
 - **Inverse Calculation**: Calculate required field strength for target distance
 - **Safety Classification**: Automatic safety status assessment
 - **Efficiency Zones**: Handles standard, optimal, and diminishing efficiency ranges
 - **Newton-Raphson Solver**: Numerical inverse calculation with convergence guarantees
+
+### Short-Range Tactical Jumps
+- **Time-Dependent Charge Accumulation**: Exponential charge density integration
+- **Multi-System Field Coupling**: Red matter core + warp core interaction
+- **Phase Offset & Subspace Resonance Tuning**: Adjustable parameters for optimal performance
+- **Sequential Jump Tracking**: Cumulative quantum scarring and criticality buildup
+- **Coordinate Accuracy**: Flexure matrix transformations for spatial distortion
+- **Landing Offset Calculation**: Positional error analysis with directional components and narrative-ready text
 
 ## Installation
 
@@ -52,12 +61,28 @@ python server.py --debug
 
 ### Available Tools
 
-The server exposes 4 MCP tools:
+The server exposes multiple MCP tools:
 
+#### Long-Range Jump Tools
 1. **blackwell_describe**: Get server information and available tools
 2. **long_range_describe**: Get detailed documentation on the long-range jump system
 3. **long_range_jump_distance**: Calculate jump distance from field strength
 4. **long_range_field_strength**: Calculate required field strength for target distance
+
+#### Short-Range Tactical Jump Tools
+5. **short_range_describe**: Get detailed documentation on the tactical jump system
+6. **short_range_jump_distance**: Calculate achievable distance from charge time and parameters
+7. **short_range_field_strength**: Calculate required field strength for target distance
+8. **short_range_sequential_jumps**: Plan and analyze multi-jump sequences with criticality tracking
+9. **short_range_optimize_cochrane**: Find safe Cochrane field zones for current conditions
+
+All short-range tactical jump responses now include a **landing_offset** block that provides:
+- Scalar magnitude of positional error (offset_meters)
+- Human-readable distance formatting (offset_formatted)
+- 3D directional components (fore/aft, port/starboard, dorsal/ventral)
+- Plain-language direction summary (e.g., "forward and to port")
+- Severity classification (NEGLIGIBLE, MINOR, SIGNIFICANT, DANGEROUS, CATASTROPHIC)
+- Narrative-ready summary text for fiction writing
 
 ### Example Usage with Claude Desktop
 
@@ -105,6 +130,63 @@ Where:
 - **EXCEEDS_SAFE_LIMITS**: 2,000,000 < M ≤ 3,000,000
 - **CATASTROPHIC_OVERLOAD_RISK**: M > 3,000,000
 
+## Short-Range Tactical Jump System
+
+### Landing Offset Enhancement
+
+Short-range tactical jumps now include detailed positional offset information in every response. The `landing_offset` block converts accuracy degradation percentages into concrete, narrative-ready positional data.
+
+#### Offset Calculation
+
+The scalar offset magnitude is calculated from the accuracy degradation:
+
+```
+offset_meters = (accuracy_degradation_pct / 100.0) × distance_meters
+```
+
+#### Directional Components
+
+Each offset includes randomly generated 3D directional components using uniform sphere distribution:
+
+- **fore_aft_meters**: Forward (+) or aft (-) displacement
+- **port_starboard_meters**: Starboard (+) or port (-) displacement  
+- **dorsal_ventral_meters**: Dorsal/up (+) or ventral/down (-) displacement
+
+The directional summary intelligently selects the most significant components (top component always included, second component if ≥40% of first).
+
+#### Severity Classification
+
+Offsets are classified based on percentage of intended jump distance:
+
+| Severity | Threshold | Description |
+|---|---|---|
+| **NEGLIGIBLE** | < 0.1% | Within tolerance, jump on target |
+| **MINOR** | 0.1% to < 1.0% | Acceptable deviation |
+| **SIGNIFICANT** | 1.0% to < 5.0% | Notable positional error |
+| **DANGEROUS** | 5.0% to < 15.0% | Correction required |
+| **CATASTROPHIC** | ≥ 15.0% | Immediate correction required |
+
+#### Example Landing Offset Response
+
+```json
+{
+  "landing_offset": {
+    "offset_meters": 5000.0,
+    "offset_formatted": "5.00 kilometers",
+    "directional_components": {
+      "fore_aft_meters": 3820.0,
+      "port_starboard_meters": -2410.0,
+      "dorsal_ventral_meters": 1180.0
+    },
+    "directional_summary": "forward and to port",
+    "severity": "MINOR",
+    "narrative_summary": "Jump placed vessel 5.00 kilometers off intended mark, displaced forward and to port."
+  }
+}
+```
+
+This enhancement enables tactical officers to report jump accuracy without manual calculations and provides fiction writers with varied, realistic positional descriptions.
+
 ## Testing
 
 ### Run Unit Tests
@@ -132,15 +214,18 @@ uss-blackwell-mcp-server/
 ├── calculator/              # Pure mathematical functions
 │   ├── __init__.py
 │   ├── constants.py        # Physical constants and parameters
-│   ├── equations.py        # Forward/inverse calculations
+│   ├── equations.py        # Long-range forward/inverse calculations
+│   ├── tactical.py         # Short-range tactical jump calculations
 │   └── safety.py           # Safety classification
 ├── tools/                   # MCP tool wrappers
 │   ├── __init__.py
 │   ├── blackwell.py        # Server description tool
-│   └── long_range.py       # Long-range calculation tools
+│   ├── long_range.py       # Long-range calculation tools
+│   └── short_range.py      # Short-range tactical jump tools
 ├── tests/                   # Test suite
 │   ├── __init__.py
-│   ├── test_equations.py   # Unit tests for equations
+│   ├── test_equations.py   # Unit tests for long-range equations
+│   ├── test_tactical_*.py  # Unit tests for tactical calculations
 │   ├── test_safety.py      # Unit tests for safety
 │   ├── test_tools.py       # Unit tests for MCP tools
 │   └── test_properties.py  # Property-based tests

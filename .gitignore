@@ -188,3 +188,5 @@ tasks.md
 *_test.py
 *_test*
 Blackwell -*
+bug-*.md
+feature-*.md

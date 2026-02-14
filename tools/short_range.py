@@ -16,7 +16,7 @@ The tactical system involves:
 - Complex coordinate transformation matrices
 """
 
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Literal, Optional, Tuple, Any
 
 # Calculator module imports for tactical calculations
 from calculator.tactical import (
@@ -47,6 +47,9 @@ from calculator.tactical import (
     # Coordinate accuracy
     calculate_flexure_matrix,
     apply_flexure_transformation,
+    
+    # Landing offset
+    calculate_landing_offset,
     
     # Safety and validation
     validate_tactical_parameters,
@@ -559,6 +562,16 @@ def short_range_jump_distance(
             - coordinate_accuracy (dict):
                 - flexure_matrix (List[List[float]]): 3x3 transformation matrix
                 - accuracy_degradation_pct (float): Accuracy degradation percentage
+            - landing_offset (dict):
+                - offset_meters (float): Scalar magnitude of positional error
+                - offset_formatted (str): Human-readable distance with units
+                - directional_components (dict):
+                    - fore_aft_meters (float): Forward/aft component (+ = forward, - = aft)
+                    - port_starboard_meters (float): Port/starboard component (+ = starboard, - = port)
+                    - dorsal_ventral_meters (float): Dorsal/ventral component (+ = dorsal, - = ventral)
+                - directional_summary (str): Plain-language direction description
+                - severity (str): Categorical severity (NEGLIGIBLE|MINOR|SIGNIFICANT|DANGEROUS|CATASTROPHIC)
+                - narrative_summary (str): Complete narrative sentence ready for dialogue
             - warnings (List[str]): Operational warnings
             - danger_zones (List[str]): Active danger zone warnings
             - success (bool): True
@@ -669,6 +682,12 @@ def short_range_jump_distance(
         ) / 3.0
         accuracy_degradation_pct = diagonal_deviation * 100.0
 
+        # Calculate landing offset
+        landing_offset = calculate_landing_offset(
+            distance_meters=distance_meters,
+            accuracy_degradation_pct=accuracy_degradation_pct
+        )
+
         # Subtask 16.8: Check for danger zones
         danger_zones = check_resonance_danger_zones(subspace_resonance, phase_offset)
 
@@ -757,6 +776,7 @@ def short_range_jump_distance(
                 "flexure_matrix": flexure_matrix,
                 "accuracy_degradation_pct": accuracy_degradation_pct
             },
+            "landing_offset": landing_offset,
             "warnings": warnings,
             "danger_zones": danger_zones,
             "success": True
@@ -1401,10 +1421,37 @@ def short_range_sequential_jumps(
     - Field strength requirements for each jump
     - Safety assessment for entire sequence
     
+    Workflow Note:
+        If you know field parameters (charge time, Magellans) but not target distance,
+        call short_range_jump_distance first for each leg to obtain distance_meters,
+        then pass those values into the jump sequence.
+    
     Args:
-        jump_sequence: List of jump specifications, each containing:
-            - distance_meters: Target distance for the jump (float)
-            - charge_time_minutes: Charge duration for the jump (float)
+        jump_sequence: List of jump specifications. Each jump object must contain:
+            
+            Required fields:
+              - distance_meters (float): Target jump distance in meters (1 to 4,500,000,000).
+                Use short_range_jump_distance to calculate this from charge time and field 
+                strength if not already known.
+              - charge_time_minutes (float): Core charge time for this jump (0.3 to 15.0 minutes).
+            
+            Note: The magellan_field is calculated automatically based on the distance and 
+            charge time, so it should not be provided as input.
+            
+            Optional fields:
+              - target_description (str): Human-readable label for this jump leg (e.g.,
+                "Approach vector", "Extraction point"). Used in output for readability only.
+            
+            Example jump object:
+              {
+                "distance_meters": 500000000,
+                "charge_time_minutes": 2.0,
+                "target_description": "Flank position Alpha"
+              }
+            
+            Note: Cochrane field, phase offset, and subspace resonance are shared across 
+            all jumps in the sequence and are passed as top-level parameters, not per-jump.
+        
         time_between_jumps_seconds: Delay between jumps (default: 2.0)
         cochrane_field: Cochrane guide field in millicochranes (default: 350.0)
         phase_offset: Phase offset 0.00-1.00 (default: 0.75)
@@ -1425,6 +1472,16 @@ def short_range_sequential_jumps(
                 - field_strength_magellans (float|None): Required field
                 - criticality_after_jump (float|None): Criticality after this jump
                 - criticality_level (str): Level name
+                - landing_offset (dict): Landing offset information for this jump:
+                    - offset_meters (float): Scalar magnitude of positional error
+                    - offset_formatted (str): Human-readable distance with units
+                    - directional_components (dict):
+                        - fore_aft_meters (float): Forward/aft component (+ = forward, - = aft)
+                        - port_starboard_meters (float): Port/starboard component (+ = starboard, - = port)
+                        - dorsal_ventral_meters (float): Dorsal/ventral component (+ = dorsal, - = ventral)
+                    - directional_summary (str): Plain-language direction description
+                    - severity (str): Categorical severity (NEGLIGIBLE|MINOR|SIGNIFICANT|DANGEROUS|CATASTROPHIC)
+                    - narrative_summary (str): Complete narrative sentence ready for dialogue
                 - safe_to_proceed (bool): Whether safe to continue
                 - warnings (List[str]): Jump-specific warnings
             - final_state (dict):
@@ -1476,7 +1533,11 @@ def short_range_sequential_jumps(
                 continue
             
             if "distance_meters" not in jump:
-                validation_errors.append(f"Jump {i+1}: Missing 'distance_meters' field")
+                validation_errors.append(
+                    f"Jump {i+1}: Missing required field 'distance_meters' (float, meters). "
+                    f"Each jump object requires: distance_meters, charge_time_minutes. "
+                    f"Optional: target_description."
+                )
             elif not isinstance(jump["distance_meters"], (int, float)):
                 validation_errors.append(f"Jump {i+1}: 'distance_meters' must be a number")
             elif jump["distance_meters"] < MIN_DISTANCE_METERS:
@@ -1490,7 +1551,11 @@ def short_range_sequential_jumps(
                 )
             
             if "charge_time_minutes" not in jump:
-                validation_errors.append(f"Jump {i+1}: Missing 'charge_time_minutes' field")
+                validation_errors.append(
+                    f"Jump {i+1}: Missing required field 'charge_time_minutes' (float, minutes). "
+                    f"Each jump object requires: distance_meters, charge_time_minutes. "
+                    f"Optional: target_description."
+                )
             elif not isinstance(jump["charge_time_minutes"], (int, float)):
                 validation_errors.append(f"Jump {i+1}: 'charge_time_minutes' must be a number")
             elif jump["charge_time_minutes"] <= 0:
@@ -1588,6 +1653,28 @@ def short_range_sequential_jumps(
             
             criticality_level, status_message = classify_criticality_level(C_total)
             
+            # Calculate flexure matrix and accuracy degradation for this jump
+            flexure_matrix = calculate_flexure_matrix(
+                M=M,
+                rho=rho,
+                phi=phase_offset,
+                R=subspace_resonance
+            )
+            
+            # Calculate accuracy degradation as percentage deviation from identity matrix
+            diagonal_deviation = (
+                abs(flexure_matrix[0][0] - 1.0) +
+                abs(flexure_matrix[1][1] - 1.0) +
+                abs(flexure_matrix[2][2] - 1.0)
+            ) / 3.0
+            accuracy_degradation_pct = diagonal_deviation * 100.0
+            
+            # Calculate landing offset for this jump
+            landing_offset = calculate_landing_offset(
+                distance_meters=distance_meters,
+                accuracy_degradation_pct=accuracy_degradation_pct
+            )
+            
             # Subtask 19.8: For each jump: check if safe to proceed
             safe_to_proceed = C_total < CRITICALITY_EJECTION  # Below ejection threshold
             
@@ -1626,6 +1713,7 @@ def short_range_sequential_jumps(
                 "field_strength_magellans": M,
                 "criticality_after_jump": C_total,
                 "criticality_level": criticality_level,
+                "landing_offset": landing_offset,
                 "safe_to_proceed": safe_to_proceed,
                 "warnings": jump_warnings
             })
@@ -1786,7 +1874,7 @@ def short_range_optimize_cochrane(
     subspace_resonance: float = 47.23,
     charge_time_minutes: Optional[float] = None,
     target_distance_meters: Optional[float] = None,
-    optimization_goal: str = "efficiency",
+    optimization_goal: Literal["efficiency", "distance", "field", "safety"] = "efficiency",
     min_efficiency: float = 0.5
 ) -> Dict[str, Any]:
     """
@@ -1806,9 +1894,26 @@ def short_range_optimize_cochrane(
     Args:
         phase_offset: Phase offset 0.00-1.00 (default: 0.75)
         subspace_resonance: Subspace resonance frequency in THz (default: 47.23)
-        charge_time_minutes: Charge duration for distance optimization (optional)
-        target_distance_meters: Target distance for field optimization (optional)
-        optimization_goal: Goal for optimization (default: "efficiency")
+        charge_time_minutes: Charge duration for distance optimization (optional, required for "distance" goal)
+        target_distance_meters: Target distance for field optimization (optional, required for "field" goal)
+        optimization_goal: Optimization strategy for Cochrane field selection. Controls which 
+            metric is used to rank safe operating zones. Valid values:
+            
+            - "efficiency" (default): Rank zones by average Cochrane coupling efficiency (η). 
+              Maximizes energy transfer from warp core to red matter system. Best for standard 
+              tactical operations.
+            
+            - "distance": Rank zones by maximum achievable jump distance within the zone.
+              Best when maximum range is the priority. Requires charge_time_minutes parameter.
+            
+            - "field": Rank zones by minimum required Magellan field strength to reach the
+              target distance. Best when conserving red matter core output. Requires 
+              target_distance_meters parameter.
+            
+            - "safety": Rank zones by average safe tolerance margin, minimizing criticality
+              risk. Best for high-jump-count sequences or when core is already under stress.
+            
+            Defaults to "efficiency" if not specified.
         min_efficiency: Minimum acceptable efficiency threshold (default: 0.5)
     
     Returns:

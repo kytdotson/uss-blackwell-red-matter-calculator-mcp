@@ -1046,3 +1046,477 @@ def estimate_time_to_threshold(
     delta_t = math.log(ratio) / LAMBDA
     
     return delta_t
+
+
+
+# =============================================================================
+# Landing Offset Functions
+# =============================================================================
+
+def _generate_directional_components(offset_meters: float) -> dict:
+    """
+    Generate random directional components on a unit sphere.
+    
+    Uses spherical coordinates with uniform distribution to generate a random
+    3D direction vector, then scales it by the offset magnitude to produce
+    directional components for landing offset.
+    
+    Coordinate mapping:
+    - X-axis → fore/aft (positive = forward, negative = aft)
+    - Y-axis → port/starboard (positive = starboard, negative = port)
+    - Z-axis → dorsal/ventral (positive = dorsal/up, negative = ventral/down)
+    
+    Args:
+        offset_meters: Scalar magnitude of the offset in meters
+        
+    Returns:
+        Dict with keys:
+            - fore_aft_meters (float): Forward/aft component (positive = forward)
+            - port_starboard_meters (float): Port/starboard component (positive = starboard)
+            - dorsal_ventral_meters (float): Dorsal/ventral component (positive = dorsal)
+            
+    Requirements:
+        - Design 2: Directional Component Generation
+        - Requirement 6: Directional Component Generation
+    """
+    import random
+    
+    try:
+        # Generate uniform random point on sphere using spherical coordinates
+        theta = random.uniform(0, 2 * math.pi)  # azimuthal angle [0, 2π]
+        phi = random.uniform(0, math.pi)         # polar angle [0, π]
+        
+        # Convert spherical to Cartesian coordinates
+        unit_x = math.sin(phi) * math.cos(theta)
+        unit_y = math.sin(phi) * math.sin(theta)
+        unit_z = math.cos(phi)
+        
+        # Scale by offset magnitude
+        return {
+            "fore_aft_meters": unit_x * offset_meters,
+            "port_starboard_meters": unit_y * offset_meters,
+            "dorsal_ventral_meters": unit_z * offset_meters
+        }
+    except Exception:
+        # Fallback to deterministic forward direction on error
+        return {
+            "fore_aft_meters": offset_meters,
+            "port_starboard_meters": 0.0,
+            "dorsal_ventral_meters": 0.0
+        }
+
+
+def _axis_to_label(axis: str, value: float) -> str:
+    """
+    Map axis name and sign to direction label.
+    
+    Converts a directional component axis and its signed value into a
+    human-readable direction label for narrative output.
+    
+    Coordinate mapping:
+    - fore_aft: positive → "forward", negative → "aft"
+    - port_starboard: positive → "to starboard", negative → "to port"
+    - dorsal_ventral: positive → "dorsal", negative → "ventral"
+    
+    Args:
+        axis: Axis name ("fore_aft", "port_starboard", or "dorsal_ventral")
+        value: Signed component value (sign determines direction)
+        
+    Returns:
+        Direction label string, or "unknown" for unrecognized axes
+        
+    Requirements:
+        - Design 3: Directional Summary Generation
+        - Requirement 7: Directional Summary Generation
+    """
+    if axis == "fore_aft":
+        return "forward" if value > 0 else "aft"
+    elif axis == "port_starboard":
+        return "to starboard" if value > 0 else "to port"
+    elif axis == "dorsal_ventral":
+        return "dorsal" if value > 0 else "ventral"
+    return "unknown"
+
+
+def _generate_directional_summary(
+    components: dict,
+    offset_meters: float
+) -> str:
+    """
+    Generate plain-language directional summary from components.
+    
+    Converts numerical directional components into a human-readable direction
+    description by ranking components by magnitude and selecting the most
+    significant ones. Follows the "two largest components" rule with a 40%
+    threshold for the secondary component.
+    
+    Algorithm:
+    1. If offset < 1 meter: return "within tolerance"
+    2. Rank components by absolute magnitude
+    3. Include top component always
+    4. Include second component if >= 40% of first
+    5. Map signs to direction labels using _axis_to_label()
+    6. Concatenate with " and " if two components qualify
+    
+    Args:
+        components: Dict with keys fore_aft_meters, port_starboard_meters, 
+                   dorsal_ventral_meters
+        offset_meters: Scalar magnitude of the offset in meters
+        
+    Returns:
+        Plain-language direction string (e.g., "forward and to port", "aft", 
+        "within tolerance")
+        
+    Examples:
+        - [38.2M, -24.1M, 11.8M] → "forward and to port"
+        - [-50M, 2M, 1M] → "aft"
+        - [0.5, 0.3, 0.2] → "within tolerance"
+        
+    Requirements:
+        - Design 3: Directional Summary Generation
+        - Requirement 7: Directional Summary Generation
+    """
+    # Special case: negligible offset
+    if offset_meters < 1.0:
+        return "within tolerance"
+    
+    # Extract components
+    fore_aft = components["fore_aft_meters"]
+    port_starboard = components["port_starboard_meters"]
+    dorsal_ventral = components["dorsal_ventral_meters"]
+    
+    # Rank components by absolute magnitude (descending order)
+    ranked = sorted(
+        [
+            (abs(fore_aft), "fore_aft", fore_aft),
+            (abs(port_starboard), "port_starboard", port_starboard),
+            (abs(dorsal_ventral), "dorsal_ventral", dorsal_ventral)
+        ],
+        key=lambda x: x[0],
+        reverse=True
+    )
+    
+    # Get primary component (largest magnitude)
+    primary_mag, primary_axis, primary_val = ranked[0]
+    primary_label = _axis_to_label(primary_axis, primary_val)
+    
+    # Check if secondary component qualifies (>= 40% of primary)
+    secondary_mag, secondary_axis, secondary_val = ranked[1]
+    if secondary_mag >= 0.4 * primary_mag:
+        secondary_label = _axis_to_label(secondary_axis, secondary_val)
+        return f"{primary_label} and {secondary_label}"
+    else:
+        return primary_label
+
+
+def _classify_offset_severity(offset_meters: float, distance_meters: float) -> str:
+    """
+    Classify offset severity as percentage of intended distance.
+    
+    Categorizes the landing offset based on what percentage of the intended
+    jump distance it represents. This provides a quick assessment of whether
+    the positional error is acceptable or requires corrective action.
+    
+    Severity thresholds:
+    - NEGLIGIBLE: < 0.1% of distance (within acceptable tolerance)
+    - MINOR: 0.1% to < 1.0% of distance (noticeable but safe)
+    - SIGNIFICANT: 1.0% to < 5.0% of distance (requires attention)
+    - DANGEROUS: 5.0% to < 15.0% of distance (correction required)
+    - CATASTROPHIC: >= 15.0% of distance (immediate correction required)
+    
+    Args:
+        offset_meters: Scalar magnitude of the offset in meters
+        distance_meters: Intended jump distance in meters
+        
+    Returns:
+        Severity classification string (NEGLIGIBLE, MINOR, SIGNIFICANT, 
+        DANGEROUS, or CATASTROPHIC)
+        
+    Examples:
+        - 50m offset on 100km jump (0.05%) → "NEGLIGIBLE"
+        - 500m offset on 100km jump (0.5%) → "MINOR"
+        - 2.5km offset on 100km jump (2.5%) → "SIGNIFICANT"
+        - 10km offset on 100km jump (10%) → "DANGEROUS"
+        - 20km offset on 100km jump (20%) → "CATASTROPHIC"
+        
+    Requirements:
+        - Design 4: Severity Classification
+        - Requirement 3.3: Severity thresholds match specification
+        - Story 3: Severity-Based Decision Making
+    """
+    # Handle edge case: zero or negative distance
+    if distance_meters <= 0:
+        return "NEGLIGIBLE"
+    
+    # Calculate percentage of intended distance
+    percentage = (offset_meters / distance_meters) * 100.0
+    
+    # Classify based on thresholds
+    if percentage < 0.1:
+        return "NEGLIGIBLE"
+    elif percentage < 1.0:
+        return "MINOR"
+    elif percentage < 5.0:
+        return "SIGNIFICANT"
+    elif percentage < 15.0:
+        return "DANGEROUS"
+    else:
+        return "CATASTROPHIC"
+
+
+def _format_offset_distance(offset_meters: float) -> str:
+    """
+    Format offset distance with appropriate units.
+    
+    Converts the raw offset distance in meters to a human-readable string
+    with appropriate unit scaling. Uses the same unit conventions as other
+    distance fields in the system for consistency.
+    
+    Unit scaling:
+    - < 1,000 m: meters (e.g., "42.50 meters")
+    - 1,000 to 999,999 m: kilometers (e.g., "5.25 kilometers")
+    - 1,000,000 to 999,999,999 m: megameters (e.g., "46.40 megameters")
+    - >= 1,000,000,000 m: AU (e.g., "1.234 AU")
+    
+    Args:
+        offset_meters: Scalar magnitude of the offset in meters
+        
+    Returns:
+        Formatted distance string with appropriate units
+        
+    Examples:
+        - 500 m → "500.00 meters"
+        - 5000 m → "5.00 kilometers"
+        - 5000000 m → "5.00 megameters"
+        - 1.496e11 m → "1.000 AU"
+        
+    Requirements:
+        - Design 5: Distance Formatting
+        - Requirement 8: Distance Formatting
+        - Requirement 1.3: offset_formatted field contains human-readable distance
+    """
+    if offset_meters < 1000:
+        return f"{offset_meters:.2f} meters"
+    elif offset_meters < 1e6:
+        return f"{offset_meters / 1000:.2f} kilometers"
+    elif offset_meters < 1e9:
+        return f"{offset_meters / 1e6:.2f} megameters"
+    else:
+        au = offset_meters / 1.496e11
+        return f"{au:.3f} AU"
+
+
+def _generate_narrative_summary(
+    offset_formatted: str,
+    directional_summary: str,
+    severity: str
+) -> str:
+    """
+    Generate narrative summary sentence based on severity level.
+    
+    Creates a complete, ready-to-use narrative sentence that incorporates
+    the offset magnitude, direction, and severity context. The template
+    varies by severity level to provide appropriate urgency and detail.
+    
+    Narrative templates by severity:
+    - NEGLIGIBLE: "Arrival within tolerance. Jump on target."
+    - MINOR: "Jump placed vessel {offset} off intended mark, displaced {direction}."
+    - SIGNIFICANT: Same as MINOR
+    - DANGEROUS: "Significant positional error: {offset} {direction} of mark. Correction required."
+    - CATASTROPHIC: "Critical positional error: {offset} {direction} of mark. Immediate correction required."
+    
+    Args:
+        offset_formatted: Human-readable offset distance with units
+        directional_summary: Plain-language direction description
+        severity: Severity classification (NEGLIGIBLE, MINOR, SIGNIFICANT, 
+                 DANGEROUS, or CATASTROPHIC)
+        
+    Returns:
+        Complete narrative sentence ready for dialogue or reporting
+        
+    Examples:
+        - NEGLIGIBLE → "Arrival within tolerance. Jump on target."
+        - MINOR, "5.00 kilometers", "forward and to port" → 
+          "Jump placed vessel 5.00 kilometers off intended mark, displaced forward and to port."
+        - DANGEROUS, "46.40 megameters", "aft" → 
+          "Significant positional error: 46.40 megameters aft of mark. Correction required."
+        
+    Requirements:
+        - Design 6: Narrative Summary Generation
+        - Requirement 9: Narrative Summary Generation
+        - Requirement 1.6: narrative_summary contains complete sentence ready for dialogue
+    """
+    if severity == "NEGLIGIBLE":
+        return "Arrival within tolerance. Jump on target."
+    
+    elif severity == "MINOR":
+        return (
+            f"Jump placed vessel {offset_formatted} off intended mark, "
+            f"displaced {directional_summary}."
+        )
+    
+    elif severity == "SIGNIFICANT":
+        return (
+            f"Jump placed vessel {offset_formatted} off intended mark, "
+            f"displaced {directional_summary}."
+        )
+    
+    elif severity == "DANGEROUS":
+        return (
+            f"Significant positional error: {offset_formatted} "
+            f"{directional_summary} of mark. Correction required."
+        )
+    
+    elif severity == "CATASTROPHIC":
+        return (
+            f"Critical positional error: {offset_formatted} "
+            f"{directional_summary} of mark. Immediate correction required."
+        )
+    
+    else:
+        # Fallback for unknown severity
+        return f"Positional offset: {offset_formatted}, {directional_summary}."
+
+
+def _create_zero_offset_response() -> dict:
+    """
+    Create helper response for zero or invalid offset cases.
+    
+    Returns a complete landing_offset response structure with all fields
+    set to zero, NEGLIGIBLE severity, and "within tolerance" messages.
+    This is used when offset calculations cannot be performed due to
+    invalid inputs (zero distance, zero accuracy degradation, etc.).
+    
+    Returns:
+        Dict containing all landing_offset fields with zero/safe values:
+            - offset_meters: 0.0
+            - offset_formatted: "0.00 meters"
+            - directional_components: all zeros
+            - directional_summary: "within tolerance"
+            - severity: "NEGLIGIBLE"
+            - narrative_summary: "Arrival within tolerance. Jump on target."
+            
+    Requirements:
+        - Design 1: Core Calculation Function
+        - Requirement 11: Error Handling
+    """
+    return {
+        "offset_meters": 0.0,
+        "offset_formatted": "0.00 meters",
+        "directional_components": {
+            "fore_aft_meters": 0.0,
+            "port_starboard_meters": 0.0,
+            "dorsal_ventral_meters": 0.0
+        },
+        "directional_summary": "within tolerance",
+        "severity": "NEGLIGIBLE",
+        "narrative_summary": "Arrival within tolerance. Jump on target."
+    }
+
+
+def calculate_landing_offset(
+    distance_meters: float,
+    accuracy_degradation_pct: float
+) -> dict:
+    """
+    Calculate landing offset information from jump distance and accuracy degradation.
+    
+    This is the main entry point for landing offset calculations. It converts
+    the accuracy degradation percentage into concrete positional offset data
+    with scalar magnitude, directional components, severity classification,
+    and narrative-ready text.
+    
+    The function performs the following steps:
+    1. Calculate scalar offset magnitude from accuracy degradation
+    2. Handle edge cases (zero/negative values)
+    3. Generate random directional components on a unit sphere
+    4. Create plain-language directional summary
+    5. Classify severity based on offset percentage
+    6. Format offset distance with appropriate units
+    7. Generate complete narrative summary
+    
+    Args:
+        distance_meters: Intended jump distance in meters (must be positive)
+        accuracy_degradation_pct: Accuracy degradation percentage (0-100)
+        
+    Returns:
+        Dict containing complete landing offset information:
+            - offset_meters (float): Scalar magnitude of positional error
+            - offset_formatted (str): Human-readable distance with units
+            - directional_components (dict): Three signed component values
+                - fore_aft_meters (float): Forward/aft component
+                - port_starboard_meters (float): Port/starboard component
+                - dorsal_ventral_meters (float): Dorsal/ventral component
+            - directional_summary (str): Plain-language direction description
+            - severity (str): Categorical severity level
+            - narrative_summary (str): Complete sentence ready for dialogue
+            
+    Examples:
+        >>> calculate_landing_offset(100000, 5.0)
+        {
+            "offset_meters": 5000.0,
+            "offset_formatted": "5.00 kilometers",
+            "directional_components": {
+                "fore_aft_meters": 3821.0,
+                "port_starboard_meters": -2410.0,
+                "dorsal_ventral_meters": 1180.0
+            },
+            "directional_summary": "forward and to port",
+            "severity": "SIGNIFICANT",
+            "narrative_summary": "Jump placed vessel 5.00 kilometers off intended mark, displaced forward and to port."
+        }
+        
+        >>> calculate_landing_offset(100000, 0.0)
+        {
+            "offset_meters": 0.0,
+            "offset_formatted": "0.00 meters",
+            "directional_components": {...all zeros...},
+            "directional_summary": "within tolerance",
+            "severity": "NEGLIGIBLE",
+            "narrative_summary": "Arrival within tolerance. Jump on target."
+        }
+        
+    Requirements:
+        - Design 1: Core Calculation Function
+        - Requirement 5: Offset Calculation Method
+        - Requirement 10: Response Structure
+        - Story 1: Tactical Officer Reports Jump Accuracy
+    """
+    # Step 1: Calculate scalar offset magnitude
+    offset_meters = (accuracy_degradation_pct / 100.0) * distance_meters
+    
+    # Step 2: Handle edge cases
+    if offset_meters < 0 or distance_meters <= 0 or accuracy_degradation_pct < 0:
+        return _create_zero_offset_response()
+    
+    # Step 3: Generate random directional components
+    directional_components = _generate_directional_components(offset_meters)
+    
+    # Step 4: Generate directional summary
+    directional_summary = _generate_directional_summary(
+        directional_components,
+        offset_meters
+    )
+    
+    # Step 5: Classify severity
+    severity = _classify_offset_severity(offset_meters, distance_meters)
+    
+    # Step 6: Format offset distance
+    offset_formatted = _format_offset_distance(offset_meters)
+    
+    # Step 7: Generate narrative summary
+    narrative_summary = _generate_narrative_summary(
+        offset_formatted,
+        directional_summary,
+        severity
+    )
+    
+    # Return complete landing offset block
+    return {
+        "offset_meters": offset_meters,
+        "offset_formatted": offset_formatted,
+        "directional_components": directional_components,
+        "directional_summary": directional_summary,
+        "severity": severity,
+        "narrative_summary": narrative_summary
+    }
