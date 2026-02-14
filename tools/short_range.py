@@ -1427,26 +1427,37 @@ def short_range_sequential_jumps(
         then pass those values into the jump sequence.
     
     Args:
-        jump_sequence: List of jump specifications. Each jump object must contain:
+        jump_sequence: List of jump specification objects. Each object in the array must be 
+            a dictionary with the following structure:
             
-            Required fields:
-              - distance_meters (float): Target jump distance in meters (1 to 4,500,000,000).
-                Use short_range_jump_distance to calculate this from charge time and field 
+            REQUIRED fields (must be present in every jump object):
+              - distance_meters (float): Target jump distance in meters. 
+                Valid range: 1.0 to 4,500,000,000.0 meters (1 meter to 30 AU).
+                Use short_range_jump_distance() to calculate this from charge time and field 
                 strength if not already known.
-              - charge_time_minutes (float): Core charge time for this jump (0.3 to 15.0 minutes).
+              
+              - charge_time_minutes (float): Core charge time for this jump in minutes.
+                Valid range: 0.3 to 15.0 minutes.
             
-            Note: The magellan_field is calculated automatically based on the distance and 
-            charge time, so it should not be provided as input.
+            OPTIONAL fields:
+              - target_description (string): Human-readable label for this jump leg 
+                (e.g., "Approach vector", "Extraction point"). Used in output for 
+                readability only. If omitted, jumps are labeled by number.
             
-            Optional fields:
-              - target_description (str): Human-readable label for this jump leg (e.g.,
-                "Approach vector", "Extraction point"). Used in output for readability only.
+            Note: The magellan_field is calculated automatically based on distance and 
+            charge time, so it should NOT be provided in jump objects.
             
-            Example jump object:
+            Example jump object with all fields:
               {
-                "distance_meters": 500000000,
+                "distance_meters": 500000000.0,
                 "charge_time_minutes": 2.0,
                 "target_description": "Flank position Alpha"
+              }
+            
+            Example minimal jump object (required fields only):
+              {
+                "distance_meters": 150000.0,
+                "charge_time_minutes": 1.5
               }
             
             Note: Cochrane field, phase offset, and subspace resonance are shared across 
