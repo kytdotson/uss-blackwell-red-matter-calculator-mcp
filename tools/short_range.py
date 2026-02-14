@@ -1905,8 +1905,12 @@ def short_range_optimize_cochrane(
     Args:
         phase_offset: Phase offset 0.00-1.00 (default: 0.75)
         subspace_resonance: Subspace resonance frequency in THz (default: 47.23)
-        charge_time_minutes: Charge duration for distance optimization (optional, required for "distance" goal)
-        target_distance_meters: Target distance for field optimization (optional, required for "field" goal)
+        charge_time_minutes: Charge duration in minutes for distance optimization. Type: number (float).
+            Valid range: 0.3 to 15.0 minutes. Optional parameter, but REQUIRED when 
+            optimization_goal="distance". Omit or pass null for other optimization goals.
+        target_distance_meters: Target jump distance in meters for field optimization. Type: number (float).
+            Valid range: 1.0 to 4,500,000,000.0 meters (1 meter to 30 AU). Optional parameter,
+            but REQUIRED when optimization_goal="field". Omit or pass null for other optimization goals.
         optimization_goal: Optimization strategy for Cochrane field selection. Controls which 
             metric is used to rank safe operating zones. Valid values:
             
