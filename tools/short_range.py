@@ -137,7 +137,7 @@ def short_range_describe() -> Dict[str, Any]:
             "min_meters": MIN_DISTANCE_METERS,
             "max_meters": MAX_DISTANCE_METERS,
             "max_au": 30.0,
-            "description": "Tactical jumps operate from 1 meter to 30 AU (4.5 billion meters)"
+            "description": "Tactical jumps operate from 1 meter to 30 AU (4.488 trillion meters)"
         },
         
         "physics_explanation": {

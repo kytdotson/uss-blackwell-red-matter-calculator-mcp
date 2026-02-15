@@ -47,7 +47,7 @@ NARRATIVE_DESCRIPTION = (
 # Create MCP server instance
 server = MCPServer(
     name="uss-blackwell-mcp", #maybe name this uss-blackwell-mcp? way shorter!
-    version="1.0.4-a",
+    version="1.0.4-a1",
     instructions=NARRATIVE_DESCRIPTION,
     host="0.0.0.0",
     port="3000",

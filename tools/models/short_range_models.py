@@ -118,13 +118,13 @@ class ShortRangeFieldStrengthArgs(BaseModel):
     
     target_distance_meters: float = Field(
         description=(
-            "Target tactical jump distance in meters. Range: 1 to 4,500,000,000 "
+            "Target tactical jump distance in meters. Range: 1 to 4,488,000,000,000 "
             "(30 AU). Tactical jumps operate from 1 meter to 30 AU using "
             "quantum-scale subspace resonances. The system uses Newton-Raphson "
             "iteration to calculate required field strength and charge time."
         ),
         ge=1.0,
-        le=4_500_000_000.0
+        le=4_488_000_000_000.0
     )
     
     cochrane_field: float = Field(
@@ -242,11 +242,11 @@ class JumpEntry(BaseModel):
     distance_meters: float = Field(
         description=(
             "Target jump distance for this leg in meters. Range: 1 to "
-            "4,500,000,000 (30 AU). Each jump in the sequence can have a "
+            "4,488,000,000,000 (30 AU). Each jump in the sequence can have a "
             "different distance."
         ),
         ge=1.0,
-        le=4_500_000_000.0
+        le=4_488_000_000_000.0
     )
     
     charge_time_minutes: float = Field(

@@ -67,7 +67,7 @@ CRITICALITY_CATASTROPHIC: float = 0.95  # Catastrophic overload inevitable
 MAX_CHARGE_TIME: float = 15.0       # Minutes (practical limit)
 SAFE_CHARGE_TIME: float = 10.0      # Minutes (recommended maximum)
 MIN_DISTANCE_METERS: float = 1.0    # Minimum tactical jump distance
-MAX_DISTANCE_METERS: float = 4.5e9  # Maximum distance (30 AU)
+MAX_DISTANCE_METERS: float = 4.488e12  # Maximum distance (30 AU = 4,487,936,121,000 meters)
 MIN_COCHRANE: float = 100.0         # Minimum Cochrane field
 MAX_COCHRANE: float = 900.0         # Maximum Cochrane field
 MIN_PHASE_OFFSET: float = 0.0       # Minimum phase offset
