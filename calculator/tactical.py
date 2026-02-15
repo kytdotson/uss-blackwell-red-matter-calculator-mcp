@@ -22,6 +22,18 @@ import math
 from typing import Tuple, List, Optional
 
 
+# =============================================================================
+# Physics Constants for CR-2026-001 Fix
+# =============================================================================
+
+# Physics boundary for 30 AU operational ceiling
+# Represents subspace resonance fabric decoherence threshold
+M_CLIFF = 5_000_000.0  # Magellans
+
+# Recalibrated base constant for M^0.5 scaling
+# Replaces linear M/1000 scaling to enable 30 AU operations at CRITICAL criticality
+K_BETA = 1.0e-4
+
 
 # =============================================================================
 # Modulation Factor Functions
@@ -610,15 +622,52 @@ def calculate_warp_core_stress(C: float, t: float, phi: float) -> float:
     return 0.0012 * cochrane_factor * exp_term * sin_term
 
 
+def omega_cliff(M: float) -> float:
+    """
+    Calculate exponential criticality cliff above 30 AU physics boundary.
+    
+    Models subspace resonance fabric decoherence (Rizan cascade) that occurs
+    when Magellan field exceeds the 5,000,000 M threshold. Below M_cliff,
+    returns 1.0 (no effect). Above M_cliff, exponential growth represents
+    quantum scarring acceleration.
+    
+    Formula:
+        Ω_cliff(M) = exp(10 × max(0, (M - M_cliff) / M_cliff))
+    
+    At M_cliff boundary (M = 5,000,000): Ω_cliff = 1.0
+    At 10% above M_cliff (M = 5,500,000): Ω_cliff ≈ 2.72 (e^1.0)
+    
+    Args:
+        M: Magellan field strength
+        
+    Returns:
+        Cliff multiplier (1.0 at boundary, exponential above)
+        
+    Requirements:
+        - Requirement 2.2: Exponential cliff above M_cliff
+        - Requirement 2.3: Ω_cliff = 1.0 at M_cliff boundary
+    """
+    excess = max(0.0, (M - M_CLIFF) / M_CLIFF)
+    return math.exp(10.0 * excess)
+
+
 def calculate_interaction_factor(M: float, phi: float, R: float) -> float:
     """
     Calculate interaction factor β_interaction(M,φ,R).
     
-    Equation: β_interaction = 0.34 × M/1000 × (1 + 0.2×sin(πφ + πR/113))
+    NEW FORMULA (CR-2026-001):
+        β_interaction = K_BETA × M^0.5 × Γ(φ, R) × Ω_cliff(M)
     
-    This factor represents how strongly the warp core stress couples to
-    the red matter criticality. Higher field strengths and certain phase-
-    resonance combinations increase the interaction.
+    Where:
+        K_BETA = 1.0 × 10^-4 (recalibrated constant)
+        M^0.5 = square root scaling (replaces linear M/1000)
+        Γ(φ, R) = phase_resonance_coupling (unchanged)
+        Ω_cliff(M) = exponential cliff term above M_cliff
+    
+    The M^0.5 scaling allows warp core stress to grow slower than jump
+    distance (M^0.73), enabling 30 AU operations at CRITICAL criticality.
+    The cliff term prevents operations beyond 30 AU by modeling subspace
+    fabric decoherence.
     
     Args:
         M: Magellan field strength
@@ -629,12 +678,18 @@ def calculate_interaction_factor(M: float, phi: float, R: float) -> float:
         Interaction factor between red matter and warp systems
         
     Requirements:
-        - Design 3.6.4: Interaction Factor
+        - Requirement 2.1: M^0.5 scaling below M_cliff
+        - Requirement 2.2: Exponential cliff above M_cliff
+        - Requirement 2.5: Preserve Γ(φ, R) calculation
     """
-    field_factor = M / 1000.0
-    sin_term = math.sin(math.pi * phi + math.pi * R / 113.0)
+    # Calculate phase-resonance coupling (unchanged)
+    gamma = calculate_phase_resonance_coupling(phi, R)
     
-    return 0.34 * field_factor * (1.0 + 0.2 * sin_term)
+    # Calculate cliff multiplier
+    cliff = omega_cliff(M)
+    
+    # New formula: K_BETA × M^0.5 × Γ × Ω_cliff
+    return K_BETA * math.sqrt(M) * gamma * cliff
 
 
 def calculate_total_criticality(

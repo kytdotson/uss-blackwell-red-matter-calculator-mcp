@@ -135,9 +135,13 @@ def short_range_describe() -> Dict[str, Any]:
         "system_type": "Quantum-Scale Subspace Resonance Exploitation",
         "distance_range": {
             "min_meters": MIN_DISTANCE_METERS,
-            "max_meters": MAX_DISTANCE_METERS,
+            "max_meters": 4_488_000_000_000.0,
             "max_au": 30.0,
-            "description": "Tactical jumps operate from 1 meter to 30 AU (4.488 trillion meters)"
+            "description": (
+                "Tactical jumps operate from 1 meter to 30 AU (4.488 trillion meters). "
+                "30 AU represents the physics instability boundary, not a safe maximum. "
+                "Operations above 25 AU require safety protocol overrides."
+            )
         },
         
         "physics_explanation": {
@@ -344,11 +348,21 @@ def short_range_describe() -> Dict[str, Any]:
             },
             "magellan_field": {
                 "symbol": "M",
-                "typical_range": "100 to 2000 Magellans",
+                "typical_range": "100 to 500,000 Magellans",
+                "extended_range": "500,000 to 5,000,000 Magellans (requires safety overrides)",
+                "physics_boundary": "5,000,000 Magellans (~30 AU)",
                 "description": (
-                    "Instantaneous red matter field strength at jump execution. For tactical jumps, "
-                    "this is typically much lower than long-range jumps due to the charge density "
-                    "multiplication factor."
+                    "Instantaneous red matter field strength at jump execution. "
+                    "Standard tactical operations: 100–500,000 M (sub-AU to ~5 AU, NOMINAL/WARNING). "
+                    "Extended operations up to 2,000,000 M (~15 AU) require Level 1 override (CRITICAL). "
+                    "Maximum safe operations at 5,000,000 M (~30 AU) require Level 2 override (CRITICAL). "
+                    "Above 5,000,000 M, the Omega_cliff term initiates exponential subspace resonance "
+                    "decoherence. No jump above 30 AU should be considered survivable."
+                ),
+                "beta_interaction_note": (
+                    "Warp core stress scales as M^0.5 below M_cliff. "
+                    "Above M_cliff, the Omega_cliff exponential term dominates. "
+                    "Red matter criticality is stable throughout and is not the limiting factor."
                 )
             },
             "energization_tracking": {
@@ -391,6 +405,16 @@ def short_range_describe() -> Dict[str, Any]:
                 "level": "CATASTROPHIC",
                 "description": "Catastrophic overload inevitable - evacuate immediately",
                 "action": "Abandon ship protocols, core breach imminent"
+            },
+            "cliff_transition_note": {
+                "description": (
+                    "The transition from CRITICAL to FAILURE_IMMINENT above 30 AU is "
+                    "not a gradual progression. It represents a phase transition in the subspace "
+                    "resonance fabric (Rizan decoherence cascade). Quantum scarring from the jump "
+                    "itself accelerates the coupling coefficient nonlinearly via Omega_cliff. "
+                    "Once Omega_cliff exceeds 2.0, core recovery between attempts is physically "
+                    "impossible without full de-energization and a minimum 45-minute recovery window."
+                )
             }
         },
         
